@@ -1,0 +1,104 @@
+.wrap {
+  width: 100%;
+  position: relative;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  gap: 0.5rem;
+  background: var(--bg-surface-elevated);
+  border-radius: var(--radius-md);
+}
+
+.emptyMessage {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+.tooltip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.tooltipLabel {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.tooltipValue {
+  font-size: 0.95rem;
+  font-weight: 850;
+}
+
+.tooltipSublabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 8px;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.legendSwatch {
+  width: 14px;
+  height: 2px;
+  display: inline-block;
+}
+
+.svgWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.svg {
+  width: 100%;
+  overflow: visible;
+  display: block;
+}
+
+.dataPoint {
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.hoverTarget {
+  cursor: pointer;
+}

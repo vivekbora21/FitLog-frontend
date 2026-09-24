@@ -1,0 +1,119 @@
+.strip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.window {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+@media (max-width: 1100px) {
+  .row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Traffic-light tones: --tone drives the dot and top rule, --tone-text the status label. */
+.good {
+  --tone: var(--color-primary);
+  --tone-text: var(--color-primary-hover);
+}
+
+.warn {
+  --tone: var(--color-amber);
+  --tone-text: #B45309;
+}
+
+.bad {
+  --tone: var(--color-rose);
+  --tone-text: var(--color-rose);
+}
+
+.pending {
+  --tone: var(--border-bright);
+  --tone-text: var(--text-muted);
+}
+
+.cell {
+  min-width: 0;
+  padding: 0.7rem 0.8rem;
+  background: var(--bg-surface-elevated);
+  border-top: 3px solid var(--tone);
+  border-radius: var(--radius-sm);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--tone);
+}
+
+.basis {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.value {
+  margin-top: 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.status {
+  margin-top: 0.2rem;
+  color: var(--tone-text);
+  font-size: 0.76rem;
+  font-weight: 800;
+}

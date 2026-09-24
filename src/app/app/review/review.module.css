@@ -1,0 +1,317 @@
+.page {
+  display: grid;
+  /* minmax(0, …) keeps the wide review table scrolling inside its container instead of widening the page. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+}
+
+.title {
+  margin: 0.3rem 0;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.6rem;
+}
+
+.statCard {
+  padding: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.statLabel {
+  color: var(--text-secondary);
+}
+
+.statValue {
+  display: block;
+  font-size: 1.25rem;
+  margin-top: 0.3rem;
+}
+
+.insightBox {
+  padding: 1.25rem;
+  background: var(--bg-surface);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.insightLabel {
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.insightHeadline {
+  margin: 0.5rem 0;
+}
+
+.insightHint {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.pillarGrid {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.pillarCard {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.pillarHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pillarName {
+  font-size: 0.85rem;
+}
+
+.pillarBadge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.pillarBadge.toneGood {
+  background: var(--chip-emerald);
+  color: var(--color-primary);
+}
+
+.pillarBadge.toneWarn {
+  background: var(--chip-amber);
+  color: var(--color-amber);
+}
+
+.pillarBadge.toneBad {
+  background: rgba(225, 29, 72, 0.12);
+  color: var(--color-rose);
+}
+
+.pillarBadge.toneNeutral {
+  background: var(--chip-slate);
+  color: var(--text-secondary);
+}
+
+.pillarMessage {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.footnote {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 0.6rem;
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.timelineMeta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.emptyText {
+  color: var(--text-secondary);
+  margin: 0 0 1rem 0;
+}
+
+.timelineTable {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.weekRow {
+  padding: 0.7rem 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  grid-template-columns: 110px 130px 1.4fr 1.4fr;
+  gap: 0.75rem;
+  font-size: 0.83rem;
+  align-items: baseline;
+}
+
+.weekRow:first-child {
+  border-top: none;
+}
+
+.weekRowCurrent {
+  background: var(--color-primary-glow);
+}
+
+.weekLabelWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.currentBadge {
+  font-size: 0.65rem;
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.weekRange {
+  color: var(--text-muted);
+}
+
+.weekNote,
+.weekAction {
+  color: var(--text-secondary);
+}
+
+.btnIcon {
+  margin-right: 6px;
+}
+
+/* Sheet 11 Workbook Table Styles */
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+.reviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.reviewTable th {
+  padding: 0.75rem 0.85rem;
+  background: var(--bg-surface-elevated);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.reviewTable td {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.reviewTable tr:last-child td {
+  border-bottom: none;
+}
+
+.reviewRowCurrent {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.primaryVal {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.deltaSub {
+  font-size: 0.72rem;
+  margin-left: 0.35rem;
+}
+
+.deltaGreen {
+  color: #10b981;
+}
+
+.deltaAmber {
+  color: var(--color-amber, #f59e0b);
+}
+
+.deltaMuted {
+  color: var(--text-muted);
+}
+
+.notesCell {
+  max-width: 260px;
+  white-space: normal;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.actionCell {
+  max-width: 320px;
+  white-space: normal;
+  line-height: 1.35;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.actionRule {
+  color: var(--color-primary);
+}
+
+.actionWait {
+  color: var(--text-muted);
+}
+
+.pillarValue {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+
+
+.personalNote {
+  display: block;
+  margin-top: 0.35rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}

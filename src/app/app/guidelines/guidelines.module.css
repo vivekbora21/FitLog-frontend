@@ -1,0 +1,214 @@
+.page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0.3rem 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.75rem;
+}
+
+.item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+}
+
+.summary {
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.protocol {
+  display: block;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  margin-top: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.instructions {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-top: 0.75rem;
+}
+
+.why {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin-top: 0.6rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.6rem;
+}
+
+.whyLabel {
+  color: var(--text-secondary);
+}
+
+.emptyState {
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+}
+
+.startBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-primary);
+  color: #052b20;
+  padding: 0.65rem 1rem;
+  font-weight: 800;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+/* Reference Diet Blueprint section */
+.referenceSection {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.referenceNotice {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+}
+
+.referenceNoticeTitle {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.referenceNoticeText {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.blueprintCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+}
+
+.blueprintCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.blueprintCardTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+}
+
+.td {
+  padding: 0.55rem 0.5rem;
+  font-size: 0.82rem;
+  border-top: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.tdStrong {
+  font-weight: 700;
+}
+
+.tdMuted {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.tdTotal {
+  font-weight: 800;
+  border-top: 2px solid var(--border-subtle);
+}
+
+.tdTotalPrimary {
+  color: var(--color-primary);
+}
+
+.tdTotalCyan {
+  color: var(--color-blue);
+}
+
+.tdProtein {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.loading {
+  color: var(--text-secondary);
+}
+
+.emptyStateSpaced {
+  margin-top: 0.75rem;
+}
+
+.emptyStatePrompt {
+  margin: 0;
+}
+
+.blueprintSubtitle {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.dashboardLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}

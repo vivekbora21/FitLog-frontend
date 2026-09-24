@@ -1,0 +1,231 @@
+.page {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.eyebrow {
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.actionSecondary {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  font-weight: 800;
+}
+
+.actionPrimary {
+  padding: 0.7rem 0.9rem;
+  background: var(--color-primary);
+  color: #052b20;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Today: one focus sentence + a single row of today's facts */
+.todayCard {
+  padding: 1.2rem 1.25rem;
+}
+
+.todayHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.todayHeading {
+  flex: 1 1 28rem;
+  min-width: 0;
+}
+
+.focus {
+  margin: 0.35rem 0 0;
+  font-size: 1.35rem;
+  line-height: 1.3;
+  font-weight: 800;
+  max-width: 48ch;
+}
+
+.todayActions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.facts {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.75rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.fact {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.factLabel {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.factValue {
+  color: var(--text-primary);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.factNote {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  text-transform: capitalize;
+}
+
+/* Trends (below the fold) */
+.trends {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.trendsHeading {
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cardPad {
+  padding: 1.1rem;
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.sectionTitleRow h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.sectionIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.anchorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.65rem;
+}
+
+.anchorCard {
+  padding: 0.85rem;
+  background: var(--bg-surface-elevated);
+}
+
+.anchorCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.anchorName {
+  color: var(--text-primary);
+  font-weight: 850;
+}
+
+.anchorValue {
+  color: var(--color-primary);
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+.anchorNote {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+  padding: 2rem 1.25rem;
+  border: 1px dashed var(--border-subtle);
+  background: var(--bg-surface-elevated);
+}
+
+.emptyStateIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0.35rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--color-primary);
+}
+
+.emptyStateTitle {
+  font-weight: 850;
+  color: var(--text-primary);
+}
+
+.emptyStateMessage {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.emptyStateAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #052b20;
+  background: var(--color-primary);
+}
+
+/* Skeleton */
+.skeletonHeaderCol {
+  display: grid;
+  gap: 0.5rem;
+}

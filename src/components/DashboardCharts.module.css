@@ -1,0 +1,196 @@
+.statTile {
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.statIcon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statIcon.slate {
+  background: var(--chip-slate);
+  color: var(--text-primary);
+}
+
+.statIcon.emerald {
+  background: var(--chip-emerald);
+  color: var(--color-primary);
+}
+
+.statIcon.cyan {
+  background: var(--chip-cyan);
+  color: var(--color-cyan);
+}
+
+.statIcon.amber {
+  background: var(--chip-amber);
+  color: var(--color-amber);
+}
+
+.statBody {
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.statValue {
+  font-size: 1.2rem;
+  font-weight: 850;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statValue.slate {
+  color: var(--text-primary);
+}
+
+.statValue.emerald {
+  color: var(--color-primary);
+}
+
+.statValue.cyan {
+  color: var(--color-cyan);
+}
+
+.statValue.amber {
+  color: var(--color-amber);
+}
+
+.statUnit {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.card {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.9rem;
+}
+
+.headerEyebrow {
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.headerTitle {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.tabList {
+  display: flex;
+  background: var(--bg-surface-elevated);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  gap: 3px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.tabActive {
+  background: var(--bg-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.tabActive.emerald {
+  color: var(--color-primary);
+}
+
+.tabActive.cyan {
+  color: var(--color-cyan);
+}
+
+.tabActive.amber {
+  color: var(--color-amber);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.65rem;
+}
+
+.chartArea {
+  min-height: 220px;
+}
+
+.emptyState {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-elevated);
+  gap: 0.75rem;
+}
+
+.emptyStateText {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.emptyStateLink {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.emptyStateLink.emerald {
+  background: var(--color-primary);
+  color: #052b20;
+}
+
+.emptyStateLink.cyan {
+  background: var(--color-cyan);
+  color: #FFFFFF;
+}
+
+.emptyStateLink.amber {
+  background: var(--color-amber);
+  color: #FFFFFF;
+}

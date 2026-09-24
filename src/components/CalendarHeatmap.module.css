@@ -1,0 +1,51 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 5px;
+}
+
+.dayCell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.dayCell:hover {
+  transform: scale(1.25);
+}
+
+.count0 {
+  background-color: #E2E8F0;
+}
+
+.count1 {
+  background-color: #A7F3D0;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+}
+
+.count2 {
+  background-color: #34D399;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+}
+
+.count3 {
+  background-color: #059669;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}

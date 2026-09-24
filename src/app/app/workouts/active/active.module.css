@@ -1,0 +1,493 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Top banner & controls */
+.banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+}
+
+.titleInput {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: Outfit, sans-serif;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  max-width: 450px;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dot {
+  color: var(--text-muted);
+}
+
+.volumeText {
+  font-size: 0.875rem;
+  color: var(--color-cyan);
+  font-weight: 600;
+}
+
+.bannerActions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Shared vertical stack (empty state, active list, modal body) */
+.stack125 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Empty state */
+.emptyCard {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.emptyIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--chip-emerald-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem auto;
+  color: var(--color-primary);
+}
+
+.emptyTitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: Outfit, sans-serif;
+  margin-bottom: 0.5rem;
+}
+
+.emptyText {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 540px;
+  margin: 0 auto 1.5rem auto;
+}
+
+/* Routine-prescribed exercise picker card */
+.routineCard {
+  padding: 1.5rem;
+}
+
+.routineCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.routineCardHeaderTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.routineCardHeaderTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: Outfit, sans-serif;
+}
+
+.routineCardHeaderSubtitle {
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.routineGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1rem;
+}
+
+.routineItem {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.1rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  gap: 1rem;
+}
+
+.routineItemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.routineItemName {
+  font-weight: 700;
+  font-size: 0.975rem;
+  color: var(--text-primary);
+}
+
+.routineItemMeta {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.routineItemAddBtn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Active exercise cards */
+.exerciseCard {
+  position: relative;
+}
+
+.exerciseCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
+}
+
+.exerciseNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exerciseName {
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-family: Outfit, sans-serif;
+}
+
+.exerciseMeta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.progressionBox {
+  margin-top: .75rem;
+  padding: .65rem .75rem;
+  background: var(--chip-emerald-softer);
+  border-left: 3px solid var(--color-primary);
+  font-size: .8rem;
+  color: var(--text-secondary);
+}
+
+.progressionLabel {
+  color: var(--color-primary);
+}
+
+/* Set table */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.theadRow {
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.th {
+  padding: 8px;
+}
+
+.thSet {
+  width: 50px;
+}
+
+.thType {
+  width: 120px;
+}
+
+.thWeight {
+  width: 110px;
+}
+
+.thReps {
+  width: 90px;
+}
+
+.thDone {
+  width: 70px;
+}
+
+.thAction {
+  width: 40px;
+}
+
+.setRow {
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+}
+
+.setRowCompleted {
+  background: var(--chip-emerald-softer);
+}
+
+.td {
+  padding: 8px;
+}
+
+.tdSetNumber {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.setTypeSelect {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.weightInput {
+  width: 80px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  outline: none;
+}
+
+.repsInput {
+  width: 65px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  outline: none;
+}
+
+.completeToggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-bright);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.completeToggleActive {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+}
+
+.removeSetBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.addSetWrap {
+  margin-top: 12px;
+}
+
+/* Quick-add remaining routine exercises */
+.moreRoutineCard {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-glass);
+  border: 1px dashed var(--border-glow);
+}
+
+.moreRoutineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.moreRoutineHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moreRoutineHeaderText {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.moreRoutineChipsWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.routineChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.routineChip:hover {
+  border-color: var(--color-primary);
+  background: var(--chip-emerald-softer);
+}
+
+.moreRoutineChipMeta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.addMovementWrap {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+/* Finish session modal */
+.finishSummaryBox {
+  text-align: center;
+  padding: 1rem;
+  background: var(--chip-emerald-softer);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-glow);
+}
+
+.finishTrophyIcon {
+  margin: 0 auto 8px auto;
+}
+
+.finishTitle {
+  font-size: 1.3rem;
+}
+
+.finishSubtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.finishVolumeHighlight {
+  color: var(--color-primary-light);
+}
+
+.formLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.rpeRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.rpeBtn {
+  flex: 1;
+  min-width: 28px;
+  padding: 8px 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rpeBtnActive {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.notesTextarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+  resize: none;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+/* Suspense fallback */
+.loadingFallback {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}

@@ -1,0 +1,193 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 2rem;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.emptyCard {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.emptyIcon {
+  margin: 0 auto 1rem auto;
+  color: var(--text-muted);
+}
+
+.emptyTitle {
+  margin: 0;
+}
+
+.emptyDesc {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sessionList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sessionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sessionTitle {
+  font-size: 1.2rem;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metaSeparator {
+  color: var(--border-bright);
+}
+
+.volumeSection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.volumeTextWrap {
+  text-align: right;
+}
+
+.volumeValue {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-primary-light);
+  font-family: 'Outfit', sans-serif;
+}
+
+.volumeLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.expandBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.sessionNotes {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: var(--bg-surface-elevated);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.expandedSection {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.exerciseBlock {
+  background: var(--bg-surface-elevated);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+
+.exerciseBlockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.exerciseName {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.setsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setChip {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.8125rem;
+}
+
+.setNum {
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+
+.setWeight {
+  color: var(--text-primary);
+}
+
+.setTypeTag {
+  margin-left: 4px;
+  font-size: 0.6875rem;
+  color: var(--color-cyan);
+  font-weight: 600;
+}

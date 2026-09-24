@@ -1,0 +1,717 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Section */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.eyebrowRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  text-transform: uppercase;
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: inline-block;
+  box-shadow: 0 0 6px var(--color-primary);
+}
+
+.title {
+  margin: 0.2rem 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+  font-family: 'Outfit', sans-serif;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 960px;
+}
+
+/* Stat Corridor Cards - Full Width 6-Col Grid */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+.statCard {
+  cursor: pointer;
+  padding: 1.15rem 1.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-bright);
+}
+
+.statTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.statIconTile {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconCyan {
+  background: rgba(2, 132, 199, 0.1);
+  color: var(--color-cyan);
+}
+
+.iconEmerald {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--color-primary);
+}
+
+.iconViolet {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--color-violet);
+}
+
+.iconAmber {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--color-amber);
+}
+
+.iconRose {
+  background: rgba(225, 29, 72, 0.1);
+  color: var(--color-rose);
+}
+
+.statChevron {
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--transition-fast);
+}
+
+.statCard:hover .statChevron {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--color-primary);
+}
+
+.statLabel {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.statValue {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.progressBarContainer {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-surface-elevated);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 0.15rem;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary));
+  transition: width 0.4s ease;
+}
+
+/* Main Form Card - Full Width */
+.formCard {
+  width: 100%;
+  padding: 2.25rem 2.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl, 20px);
+  box-shadow: var(--shadow-sm);
+}
+
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.formTitleWrap {
+  flex: 1;
+  min-width: 260px;
+}
+
+.formTitle {
+  font-size: 1.35rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.015em;
+}
+
+.formHint {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-top: 0.3rem;
+  line-height: 1.45;
+}
+
+.dateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.45rem 0.95rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.dateChipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* Section Blocks */
+.sectionBlock {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.15rem;
+}
+
+.sectionTitle {
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.sectionIconTile {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.targetBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(5, 150, 105, 0.08);
+  color: var(--color-primary);
+  border: 1px solid rgba(5, 150, 105, 0.22);
+}
+
+.targetBadgeViolet {
+  background: rgba(124, 58, 237, 0.08);
+  color: var(--color-violet);
+  border-color: rgba(124, 58, 237, 0.22);
+}
+
+.targetBadgeCyan {
+  background: rgba(2, 132, 199, 0.08);
+  color: var(--color-cyan);
+  border-color: rgba(2, 132, 199, 0.22);
+}
+
+/* Full Width 3-Column Inputs Grid */
+.inputGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fieldFullWidth {
+  grid-column: 1 / -1;
+}
+
+.fieldLabelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fieldLabel {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.fieldDescriptor {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Input Wrapper & Styled Controls */
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 3.5rem 0.75rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: #FFFFFF;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.unitSuffix {
+  position: absolute;
+  right: 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  pointer-events: none;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Select Dropdown */
+.selectWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem 2.25rem 0.75rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: #FFFFFF;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.selectChevron {
+  position: absolute;
+  right: 0.85rem;
+  pointer-events: none;
+  color: var(--text-muted);
+}
+
+/* Quick Increment & Preset Chips */
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.quickChip {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 650;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1.2;
+}
+
+.quickChip:hover {
+  background: var(--color-primary-glow);
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+/* Rating Pill Group */
+.ratingGroup {
+  display: flex;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.ratingBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 0.3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.ratingBtn:hover {
+  background: #FFFFFF;
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.ratingBtnActive {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%) !important;
+  border-color: var(--color-primary) !important;
+  color: #FFFFFF !important;
+  font-weight: 750;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+  transform: translateY(-1px);
+}
+
+.ratingBtnActive:hover {
+  color: #FFFFFF;
+}
+
+/* Hydration Booster Grid */
+.boosterGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.boosterBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0.65rem 0.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.boosterBtn:hover {
+  background: rgba(2, 132, 199, 0.08);
+  border-color: var(--color-cyan);
+  color: var(--color-cyan);
+  transform: translateY(-1px);
+}
+
+.boosterSub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Hydration Status Mini Card */
+.hydrationCardMini {
+  padding: 0.75rem 1rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.hydrationCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hydrationCardValue {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-cyan);
+  font-family: 'Outfit', sans-serif;
+}
+
+.hydrationCardTarget {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.hydrationCardBar {
+  width: 100%;
+  height: 5px;
+  background: var(--border-bright);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.hydrationCardFill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #38bdf8, var(--color-cyan));
+  transition: width 0.3s ease;
+}
+
+.hydrationCardStatus {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 550;
+}
+
+/* Textarea */
+.textarea {
+  width: 100%;
+  min-height: 95px;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: #FFFFFF;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.5;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Tag Chips for Notes */
+.tagChipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.tagChip {
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tagChip:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+/* Bottom Action Bar */
+.actionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.saveNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  font-weight: 650;
+  padding: 0.4rem 0.85rem;
+  background: rgba(5, 150, 105, 0.08);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  border-radius: var(--radius-full);
+  animation: fadeIn 0.2s ease;
+}
+
+.saveNoticeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+}
+
+.actionButtonWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (max-width: 1280px) {
+  .statGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .formCard {
+    padding: 1.5rem;
+  }
+
+  .inputGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actionRow {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .actionButtonWrap {
+    width: 100%;
+  }
+
+  .actionButtonWrap button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .boosterGrid {
+    grid-template-columns: 1fr;
+  }
+}

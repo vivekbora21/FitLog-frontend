@@ -1,0 +1,245 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.bullet {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.roleText {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.title {
+  font-size: 2rem;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.sectionTitle {
+  font-size: 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.clientGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.clientCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.clientInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: rgba(16, 185, 129, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatarIcon {
+  color: var(--color-primary);
+}
+
+.clientName {
+  font-size: 1.15rem;
+}
+
+.clientEmail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.clientProgramNotes {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  background: var(--bg-surface-elevated);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.clientCardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.inspectLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--color-cyan);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color var(--transition-fast);
+}
+
+.inspectLink:hover {
+  color: var(--color-primary-light);
+}
+
+.assignmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.assignmentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.assignmentTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assignmentTitle {
+  font-size: 1.15rem;
+}
+
+.assignmentMeta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.clientHighlight {
+  color: var(--text-primary);
+}
+
+.assignmentActions {
+  display: flex;
+  gap: 8px;
+}
+
+.feedbackBox {
+  margin-top: 1rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+}
+
+.feedbackHeader {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-amber);
+  text-transform: uppercase;
+}
+
+.feedbackContent {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.fieldLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.select {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+  font-size: 0.9rem;
+  transition: border-color var(--transition-fast);
+}
+
+.select:focus {
+  border-color: var(--color-primary);
+}
+
+.textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+  resize: none;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1rem;
+}

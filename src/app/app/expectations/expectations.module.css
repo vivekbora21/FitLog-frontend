@@ -1,0 +1,163 @@
+.page {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0.3rem 0;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+}
+
+.sectionTitle {
+  font-size: 1.05rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  margin-top: 0.6rem;
+  border-radius: var(--radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-surface-elevated);
+}
+
+.td {
+  padding: 0.65rem 0.6rem;
+  vertical-align: top;
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.tdStrong {
+  font-weight: 700;
+}
+
+.tdAccent {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.tdMuted {
+  color: var(--text-secondary);
+}
+
+.lawsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.lawCard {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+}
+
+.lawTitle {
+  color: var(--color-primary);
+}
+
+.lawText {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+.lawPitfall {
+  font-size: 0.8rem;
+  color: #d97706;
+  margin-top: 0.5rem;
+}
+
+.lawHabit {
+  font-size: 0.8rem;
+  margin-top: 0.4rem;
+}
+
+.timelineHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.timelineHeaderTitle {
+  margin: 0;
+}
+
+.timelineMeta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.thCurrent {
+  background: var(--color-primary-glow);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.tdCurrent {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.activeLabel {
+  display: inline-block;
+  font-size: 0.65rem;
+  color: var(--color-primary);
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.emptyStateHint {
+  margin: 0.35rem 0 0;
+}
+
+.emptyState {
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+}
+
+.startBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-primary);
+  color: #052b20;
+  padding: 0.65rem 1rem;
+  font-weight: 800;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
