@@ -27,7 +27,7 @@ export interface GymMembership {
 }
 
 export interface User {
-  id: string;
+  id: string | number;
   email: string;
   username: string;
   first_name: string;
