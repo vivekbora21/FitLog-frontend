@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Sidebar } from '@/components/Sidebar';
 import { useAuth } from '@/lib/authContext';
 import { api } from '@/lib/api';
+import { needsOnboarding, onboardingSkipKey } from '@/lib/onboarding';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -19,6 +20,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');
+    } else if (!loading && user) {
+      const skipped = typeof window !== 'undefined' && localStorage.getItem(onboardingSkipKey(user.id));
+      if (!skipped && needsOnboarding(user.profile)) {
+        router.replace('/onboarding');
+      }
     }
   }, [loading, user, router]);
 

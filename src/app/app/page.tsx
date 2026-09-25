@@ -10,6 +10,8 @@ import { Card } from '@/components/ui/Card';
 import { RightPathCard } from '@/components/RightPathCard';
 import { PlanSelectorModal } from '@/components/PlanSelectorModal';
 import { WeeklyHealthStrip } from '@/components/WeeklyHealthStrip';
+import { useAuth } from '@/lib/authContext';
+import { onboardingSkipKey } from '@/lib/onboarding';
 import styles from './page.module.css';
 
 type DashboardStats = Partial<DashboardStatsBase> & { trends?: DashboardTrends };
@@ -62,6 +64,7 @@ function TodayFact({ label, value, note }: { label: string; value: string; note?
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [today, setToday] = useState<TodayPayload | null>(null);
   const [pacingData, setPacingData] = useState<JourneyPacingData | null>(null);
@@ -78,7 +81,8 @@ export default function DashboardPage() {
       setStats(dashboard);
       setToday(current);
       setPacingData(pacing);
-      if (pacing && !pacing.has_program) {
+      const skippedOnboarding = typeof window !== 'undefined' && user?.id && localStorage.getItem(onboardingSkipKey(user.id));
+      if (pacing && !pacing.has_program && !skippedOnboarding) {
         setIsPlanModalOpen(true);
       }
     } catch (err) {
@@ -196,11 +200,9 @@ export default function DashboardPage() {
 
       <PlanSelectorModal
         isOpen={isPlanModalOpen}
-        dismissible={Boolean(pacingData?.has_program)}
+        dismissible={true}
         onClose={() => {
-          if (pacingData?.has_program) {
-            setIsPlanModalOpen(false);
-          }
+          setIsPlanModalOpen(false);
         }}
         onSuccess={() => {
           loadData();
