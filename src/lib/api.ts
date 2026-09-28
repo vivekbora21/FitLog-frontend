@@ -213,6 +213,16 @@ class ApiClient {
     });
   }
 
+  // Swap the recommended exercise for a routine-exercise slot on a specific program day.
+  // Sending the slot's own original `exercise` id as exercise_id reverts the override.
+  // Returns the full updated ProgramDay payload (same shape as one entry of plan.days[]).
+  async swapExercise(payload: { day_number: number; routine_exercise_id: string; exercise_id: string }) {
+    return this.request<any>('/workouts/sessions/swap-exercise/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   async getRoutines() {
     return this.request<any>('/workouts/routines/');
   }

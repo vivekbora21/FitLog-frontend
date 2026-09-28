@@ -168,8 +168,8 @@ export default function JourneyDetailPage() {
   const [prPage, setPrPage] = useState(1);
   const [prScope, setPrScope] = useState<PrScope>('JOURNEY');
 
-  // Chart Tab Navigation ('WEIGHT' | 'WAIST' | 'ADHERENCE' | 'ALL')
-  const [chartTab, setChartTab] = useState<'WEIGHT' | 'WAIST' | 'ADHERENCE' | 'ALL'>('WEIGHT');
+  // Chart Tab Navigation ('WEIGHT' | 'WAIST' | 'ADHERENCE' | 'CARDIO' | 'ALL')
+  const [chartTab, setChartTab] = useState<'WEIGHT' | 'WAIST' | 'ADHERENCE' | 'CARDIO' | 'ALL'>('WEIGHT');
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
@@ -315,6 +315,14 @@ export default function JourneyDetailPage() {
     value: v.volume_kg,
     sublabel: v.title,
   }));
+
+  const cardioChartData = cardio_log
+    .filter((c) => c.completed)
+    .map((c) => ({
+      label: new Date(c.date).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }),
+      value: c.duration_minutes,
+      sublabel: c.modality,
+    }));
 
   const maxMuscleSets = Math.max(1, ...summary.muscle_breakdown.map((m) => m.sets));
 
@@ -718,6 +726,13 @@ export default function JourneyDetailPage() {
             </button>
             <button
               type="button"
+              className={`${styles.chartTab} ${chartTab === 'CARDIO' ? styles.chartTabActive : ''}`}
+              onClick={() => setChartTab('CARDIO')}
+            >
+              <HeartPulse size={14} /> Cardio Minutes
+            </button>
+            <button
+              type="button"
               className={`${styles.chartTab} ${chartTab === 'ALL' ? styles.chartTabActive : ''}`}
               onClick={() => setChartTab('ALL')}
             >
@@ -757,6 +772,20 @@ export default function JourneyDetailPage() {
               startDate={program.start_date}
               adherencePct={pacing?.adherence?.adherence_pct ?? 100}
             />
+          )}
+
+          {/* Chart 4: Cardio Minutes Per Session Over Time */}
+          {(chartTab === 'CARDIO' || chartTab === 'ALL') && (
+            <div className={styles.chartCard}>
+              <MetricChart
+                data={cardioChartData}
+                title="Cardio Minutes Trend"
+                unit="min"
+                type="bar"
+                color="#F43F5E"
+                emptyMessage="No cardio sessions logged during this journey."
+              />
+            </div>
           )}
         </div>
       </section>

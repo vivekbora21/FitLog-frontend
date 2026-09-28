@@ -302,6 +302,9 @@ export default function NutritionPage() {
   const modalYesterdayKcal = modalYesterdayMeals.reduce((acc, m) => acc + m.calories, 0);
   const modalYesterdayProtein = modalYesterdayMeals.reduce((acc, m) => acc + m.protein_g, 0);
 
+  const isBulk = mode === 'BULK';
+  const isCut = mode === 'CUT';
+
   return (
     <div className={styles.page}>
       {/* Header */}
@@ -309,7 +312,11 @@ export default function NutritionPage() {
         <div>
           <h1 className={styles.title}>Nutrition & Macro Tracking</h1>
           <p className={styles.subtitle}>
-            Maintain optimal caloric and macronutrient fuel for muscle recovery and performance.
+            {isBulk
+              ? 'Bulk Mode Active: Target represents your minimum surplus floor to ensure muscle hypertrophy.'
+              : isCut
+              ? 'Cut Mode Active: Target represents your maximum deficit ceiling to burn fat while sparing lean mass.'
+              : 'Maintain optimal caloric and macronutrient fuel for muscle recovery and performance.'}
           </p>
         </div>
 
@@ -323,16 +330,16 @@ export default function NutritionPage() {
       <Card elevated className={styles.macroCard}>
         <div className={styles.macroRow}>
           <MacroRing
-            label="Calories"
+            label={isBulk ? "Calories (Min Target)" : isCut ? "Calories (Max Deficit)" : "Calories"}
             current={data?.day.total_calories || 0}
             target={targetKcal ?? 0}
             unit=" kcal"
-            color="#10B981"
+            color={isBulk ? ((data?.day.total_calories || 0) >= (targetKcal || 0) ? "#10B981" : "#F59E0B") : ((data?.day.total_calories || 0) > (targetKcal || 0) ? "#F59E0B" : "#10B981")}
             size={135}
             strokeWidth={11}
           />
           <MacroRing
-            label="Protein"
+            label={isCut ? "Protein (Shield)" : isBulk ? "Protein (Growth)" : "Protein"}
             current={data?.day.total_protein || 0}
             target={targetProtein ?? 0}
             unit="g"

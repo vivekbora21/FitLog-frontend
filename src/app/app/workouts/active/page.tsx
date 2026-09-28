@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Trash2, Check, Trophy, X, Dumbbell, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
-import { Exercise, ProgressionRecommendation, Routine } from '@/lib/types';
+import { Exercise, ProgressionRecommendation, Routine, RoutineExerciseSwap } from '@/lib/types';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -19,6 +19,10 @@ interface ActiveSet {
   reps: number;
   rpe?: number | null;
   completed: boolean;
+  duration_seconds?: number | null;
+  incline_percent?: number | null;
+  speed_kmh?: number | null;
+  intensity?: string;
 }
 
 interface ActiveExercise {
@@ -44,11 +48,20 @@ type RoutineExercisePayload = {
   target_rpe?: number | null;
   suggested_weight_kg?: number | null;
   progression?: ProgressionRecommendation | null;
+  // Per-day override of which exercise fills this slot; sets/reps/rest/RPE/load stay the original prescription.
+  swap?: RoutineExerciseSwap | null;
 };
 
 // The load to prescribe: server progression first, routine default as fallback.
 const plannedLoad = (re: RoutineExercisePayload) =>
   re.progression?.recommended_weight_kg ?? re.suggested_weight_kg ?? null;
+
+// The exercise identity actually recommended for today: the swap replacement when one is set, else the routine default.
+const effectiveExercise = (re: RoutineExercisePayload) => ({
+  id: re.swap?.exercise ?? re.exercise,
+  name: re.swap?.exercise_name ?? re.exercise_name,
+  muscle: re.swap?.primary_muscle ?? re.primary_muscle,
+});
 
 type RoutinePayload = {
   id?: string;
@@ -129,27 +142,51 @@ function ActiveWorkoutLoggerInner() {
   // Build an active exercise from the routine prescription, pre-filling each set with
   // the server's progression recommendation so it matches what the Plan page shows.
   const toActiveExercise = (re: RoutineExercisePayload): ActiveExercise => {
-    const setsCount = re.target_sets || 3;
+    const setsCount = re.target_sets || 1;
     const targetRepMatch = re.target_reps?.match(/\d+/);
     const defaultReps = targetRepMatch ? parseInt(targetRepMatch[0], 10) : 8;
     const weight = plannedLoad(re) ?? 0;
+    const effective = effectiveExercise(re);
+    const isCardio = (effective.muscle || '').toLowerCase() === 'cardio' ||
+      effective.name.toLowerCase().includes('treadmill') ||
+      effective.name.toLowerCase().includes('incline') ||
+      effective.name.toLowerCase().includes('bike') ||
+      effective.name.toLowerCase().includes('rowing');
+
+    let defaultDurationMins = 20;
+    const durMatch = (re.target_reps || '').match(/(\d+)/);
+    if (durMatch) defaultDurationMins = parseInt(durMatch[1], 10);
+
+    let defaultIncline: number | null = null;
+    const incMatch = effective.name.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (incMatch) defaultIncline = parseFloat(incMatch[1]);
+    else if (effective.name.toLowerCase().includes('incline')) defaultIncline = 10;
+
+    let defaultSpeed: number | null = null;
+    const spdMatch = effective.name.match(/(\d+(?:\.\d+)?)\s*(?:km\/h|kmh)/i);
+    if (spdMatch) defaultSpeed = parseFloat(spdMatch[1]);
+    else if (effective.name.toLowerCase().includes('walk') || effective.name.toLowerCase().includes('treadmill')) defaultSpeed = 4.8;
 
     return {
-      exerciseId: re.exercise,
-      name: re.exercise_name,
-      primaryMuscle: re.primary_muscle,
+      exerciseId: effective.id,
+      name: effective.name,
+      primaryMuscle: effective.muscle,
       restSeconds: re.rest_seconds || 90,
       notes: re.notes || '',
       targetReps: re.target_reps,
       targetRpe: re.target_rpe,
       progression: re.progression,
-      sets: Array.from({ length: setsCount }).map((_, sIdx) => ({
+      sets: Array.from({ length: isCardio ? Math.max(1, re.target_sets || 1) : (re.target_sets || 3) }).map((_, sIdx) => ({
         set_number: sIdx + 1,
         set_type: 'NORMAL',
         weight_kg: weight,
         reps: re.progression?.target_reps[sIdx] ?? defaultReps,
         rpe: re.target_rpe || null,
         completed: false,
+        duration_seconds: isCardio ? defaultDurationMins * 60 : null,
+        incline_percent: defaultIncline,
+        speed_kmh: defaultSpeed,
+        intensity: isCardio ? 'Zone 2' : '',
       })),
     };
   };
@@ -160,7 +197,7 @@ function ActiveWorkoutLoggerInner() {
 
   const addAllRoutineExercises = () => {
     const unadded = routineExercises.filter(
-      (re) => !exercises.some((ex) => ex.exerciseId === re.exercise)
+      (re) => !exercises.some((ex) => ex.exerciseId === effectiveExercise(re).id)
     );
     setExercises((prev) => [...prev, ...unadded.map(toActiveExercise)]);
   };
@@ -256,6 +293,10 @@ function ActiveWorkoutLoggerInner() {
             reps: Number(s.reps) || 0,
             rpe: s.rpe ? Number(s.rpe) : null,
             completed: s.completed,
+            duration_seconds: s.duration_seconds || null,
+            incline_percent: s.incline_percent !== null && s.incline_percent !== undefined ? Number(s.incline_percent) : null,
+            speed_kmh: s.speed_kmh !== null && s.speed_kmh !== undefined ? Number(s.speed_kmh) : null,
+            intensity: s.intensity || '',
           })),
         })),
       };
@@ -272,7 +313,7 @@ function ActiveWorkoutLoggerInner() {
   };
 
   const unaddedRoutineExercises = routineExercises.filter(
-    (re) => !exercises.some((e) => e.exerciseId === re.exercise)
+    (re) => !exercises.some((e) => e.exerciseId === effectiveExercise(re).id)
   );
 
   return (
@@ -353,32 +394,37 @@ function ActiveWorkoutLoggerInner() {
               </div>
 
               <div className={styles.routineGrid}>
-                {routineExercises.map((re, idx) => (
-                  <div key={idx} className={styles.routineItem}>
-                    <div>
-                      <div className={styles.routineItemTop}>
-                        <span className={styles.routineItemName}>
-                          {re.exercise_name}
-                        </span>
-                        <Badge variant="emerald">{re.primary_muscle}</Badge>
+                {routineExercises.map((re, idx) => {
+                  const effective = effectiveExercise(re);
+                  return (
+                    <div key={idx} className={styles.routineItem}>
+                      <div>
+                        <div className={styles.routineItemTop}>
+                          <span className={styles.routineItemName}>
+                            {effective.name}
+                          </span>
+                          <Badge variant="emerald">{effective.muscle}</Badge>
+                          {re.swap && <Badge variant="amber">Swapped</Badge>}
+                        </div>
+                        <div className={styles.routineItemMeta}>
+                          Target: {re.target_sets || 3} sets × {re.target_reps || '8 reps'}
+                          {plannedLoad(re) ? ` · ${plannedLoad(re)} kg` : ''}
+                          {re.target_rpe ? ` @ RPE ${re.target_rpe}` : ''}
+                          {re.swap ? ` · recommended: ${re.exercise_name}` : ''}
+                        </div>
                       </div>
-                      <div className={styles.routineItemMeta}>
-                        Target: {re.target_sets || 3} sets × {re.target_reps || '8 reps'}
-                        {plannedLoad(re) ? ` · ${plannedLoad(re)} kg` : ''}
-                        {re.target_rpe ? ` @ RPE ${re.target_rpe}` : ''}
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => addRoutineExercise(re)}
+                        className={styles.routineItemAddBtn}
+                      >
+                        <Plus size={14} />
+                        <span>Add Exercise</span>
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => addRoutineExercise(re)}
-                      className={styles.routineItemAddBtn}
-                    >
-                      <Plus size={14} />
-                      <span>Add Exercise</span>
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           )}
@@ -417,94 +463,166 @@ function ActiveWorkoutLoggerInner() {
                 </div>
               )}
 
-              {/* Set Table */}
-              <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr className={styles.theadRow}>
-                      <th className={`${styles.th} ${styles.thSet}`}>Set</th>
-                      <th className={`${styles.th} ${styles.thType}`}>Type</th>
-                      <th className={`${styles.th} ${styles.thWeight}`}>kg</th>
-                      <th className={`${styles.th} ${styles.thReps}`}>Reps</th>
-                      <th className={`${styles.th} ${styles.thDone}`}>Done</th>
-                      <th className={`${styles.th} ${styles.thAction}`}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ex.sets.map((set, sIdx) => (
-                      <tr
-                        key={sIdx}
-                        className={`${styles.setRow} ${set.completed ? styles.setRowCompleted : ''}`}
-                      >
-                        {/* Set # */}
-                        <td className={`${styles.td} ${styles.tdSetNumber}`}>
-                          {set.set_number}
-                        </td>
+              {/* Set / Interval Table */}
+              {(() => {
+                const isCardio = (ex.primaryMuscle || '').toLowerCase() === 'cardio' ||
+                  ex.name.toLowerCase().includes('treadmill') ||
+                  ex.name.toLowerCase().includes('incline') ||
+                  ex.name.toLowerCase().includes('bike') ||
+                  ex.name.toLowerCase().includes('rowing');
 
-                        {/* Set Type */}
-                        <td className={styles.td}>
-                          <select
-                            value={set.set_type}
-                            onChange={(e) => updateSet(exIdx, sIdx, 'set_type', e.target.value as ActiveSet['set_type'])}
-                            className={styles.setTypeSelect}
-                          >
-                            <option value="NORMAL">Normal</option>
-                            <option value="WARMUP">Warmup</option>
-                            <option value="DROP">Drop Set</option>
-                            <option value="FAILURE">To Failure</option>
-                          </select>
-                        </td>
-
-                        {/* Weight (kg) */}
-                        <td className={styles.td}>
-                          <input
-                            type="number"
-                            step="0.5"
-                            value={set.weight_kg}
-                            onChange={(e) => updateSet(exIdx, sIdx, 'weight_kg', parseFloat(e.target.value) || 0)}
-                            className={styles.weightInput}
-                          />
-                        </td>
-
-                        {/* Reps */}
-                        <td className={styles.td}>
-                          <input
-                            type="number"
-                            value={set.reps}
-                            onChange={(e) => updateSet(exIdx, sIdx, 'reps', parseInt(e.target.value, 10) || 0)}
-                            className={styles.repsInput}
-                          />
-                        </td>
-
-                        {/* Completed Checkbox */}
-                        <td className={styles.td}>
+                return (
+                  <div>
+                    {isCardio && (
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
+                          Incline Presets:
+                        </span>
+                        {[0, 4, 8, 10, 12, 15].map((inc) => (
                           <button
+                            key={inc}
                             type="button"
-                            onClick={() => updateSet(exIdx, sIdx, 'completed', !set.completed)}
-                            className={`${styles.completeToggle} ${set.completed ? styles.completeToggleActive : ''}`}
-                            aria-label={set.completed ? 'Mark incomplete' : 'Mark complete'}
+                            onClick={() => {
+                              ex.sets.forEach((_, sIdx) => updateSet(exIdx, sIdx, 'incline_percent', inc));
+                            }}
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              border: '1px solid var(--color-border)',
+                              background: 'var(--color-surface)',
+                              color: 'var(--color-text-primary)',
+                              cursor: 'pointer',
+                            }}
                           >
-                            {set.completed && <Check size={18} color="#FFFFFF" strokeWidth={3} />}
+                            {inc}%
                           </button>
-                        </td>
-
-                        {/* Remove Set */}
-                        <td className={styles.td}>
-                          {ex.sets.length > 1 && (
-                            <button
-                              onClick={() => removeSet(exIdx, sIdx)}
-                              className={styles.removeSetBtn}
-                              aria-label="Remove set"
+                        ))}
+                      </div>
+                    )}
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr className={styles.theadRow}>
+                            <th className={`${styles.th} ${styles.thSet}`}>{isCardio ? 'Int' : 'Set'}</th>
+                            <th className={`${styles.th} ${styles.thType}`}>Type</th>
+                            <th className={`${styles.th} ${styles.thWeight}`}>{isCardio ? 'Time (min)' : 'kg'}</th>
+                            <th className={`${styles.th} ${styles.thReps}`}>{isCardio ? 'Incline %' : 'Reps'}</th>
+                            {isCardio && <th className={styles.th}>Speed (km/h)</th>}
+                            <th className={`${styles.th} ${styles.thDone}`}>Done</th>
+                            <th className={`${styles.th} ${styles.thAction}`}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ex.sets.map((set, sIdx) => (
+                            <tr
+                              key={sIdx}
+                              className={`${styles.setRow} ${set.completed ? styles.setRowCompleted : ''}`}
                             >
-                              <X size={14} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                              <td className={`${styles.td} ${styles.tdSetNumber}`}>
+                                {set.set_number}
+                              </td>
+
+                              <td className={styles.td}>
+                                <select
+                                  value={set.set_type}
+                                  onChange={(e) => updateSet(exIdx, sIdx, 'set_type', e.target.value as ActiveSet['set_type'])}
+                                  className={styles.setTypeSelect}
+                                >
+                                  <option value="NORMAL">{isCardio ? 'Interval' : 'Normal'}</option>
+                                  <option value="WARMUP">Warmup</option>
+                                  <option value="DROP">Cooldown</option>
+                                  <option value="FAILURE">Max Effort</option>
+                                </select>
+                              </td>
+
+                              {/* Weight / Duration */}
+                              <td className={styles.td}>
+                                {isCardio ? (
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={set.duration_seconds ? Math.round(set.duration_seconds / 60) : 20}
+                                    onChange={(e) => updateSet(exIdx, sIdx, 'duration_seconds', (parseInt(e.target.value, 10) || 0) * 60)}
+                                    className={styles.weightInput}
+                                  />
+                                ) : (
+                                  <input
+                                    type="number"
+                                    step="0.5"
+                                    value={set.weight_kg}
+                                    onChange={(e) => updateSet(exIdx, sIdx, 'weight_kg', parseFloat(e.target.value) || 0)}
+                                    className={styles.weightInput}
+                                  />
+                                )}
+                              </td>
+
+                              {/* Reps / Incline */}
+                              <td className={styles.td}>
+                                {isCardio ? (
+                                  <input
+                                    type="number"
+                                    step="0.5"
+                                    value={set.incline_percent ?? 0}
+                                    onChange={(e) => updateSet(exIdx, sIdx, 'incline_percent', parseFloat(e.target.value) || 0)}
+                                    className={styles.repsInput}
+                                  />
+                                ) : (
+                                  <input
+                                    type="number"
+                                    value={set.reps}
+                                    onChange={(e) => updateSet(exIdx, sIdx, 'reps', parseInt(e.target.value, 10) || 0)}
+                                    className={styles.repsInput}
+                                  />
+                                )}
+                              </td>
+
+                              {/* Cardio Speed */}
+                              {isCardio && (
+                                <td className={styles.td}>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={set.speed_kmh ?? 4.8}
+                                    onChange={(e) => updateSet(exIdx, sIdx, 'speed_kmh', parseFloat(e.target.value) || 0)}
+                                    className={styles.repsInput}
+                                  />
+                                </td>
+                              )}
+
+                              {/* Completed Checkbox */}
+                              <td className={styles.td}>
+                                <button
+                                  type="button"
+                                  onClick={() => updateSet(exIdx, sIdx, 'completed', !set.completed)}
+                                  className={`${styles.completeToggle} ${set.completed ? styles.completeToggleActive : ''}`}
+                                  aria-label={set.completed ? 'Mark incomplete' : 'Mark complete'}
+                                >
+                                  {set.completed && <Check size={18} color="#FFFFFF" strokeWidth={3} />}
+                                </button>
+                              </td>
+
+                              {/* Remove Set */}
+                              <td className={styles.td}>
+                                {ex.sets.length > 1 && (
+                                  <button
+                                    onClick={() => removeSet(exIdx, sIdx)}
+                                    className={styles.removeSetBtn}
+                                    aria-label="Remove set"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Add Set Button */}
               <div className={styles.addSetWrap}>
@@ -534,17 +652,21 @@ function ActiveWorkoutLoggerInner() {
                 )}
               </div>
               <div className={styles.moreRoutineChipsWrap}>
-                {unaddedRoutineExercises.map((re, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => addRoutineExercise(re)}
-                    className={styles.routineChip}
-                  >
-                    <Plus size={14} color="var(--color-primary)" />
-                    <span>{re.exercise_name}</span>
-                    <span className={styles.moreRoutineChipMeta}>({re.primary_muscle})</span>
-                  </button>
-                ))}
+                {unaddedRoutineExercises.map((re, idx) => {
+                  const effective = effectiveExercise(re);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => addRoutineExercise(re)}
+                      className={styles.routineChip}
+                    >
+                      <Plus size={14} color="var(--color-primary)" />
+                      <span>{effective.name}</span>
+                      <span className={styles.moreRoutineChipMeta}>({effective.muscle})</span>
+                      {re.swap && <Badge variant="amber" size="sm">Swapped</Badge>}
+                    </button>
+                  );
+                })}
               </div>
             </Card>
           )}

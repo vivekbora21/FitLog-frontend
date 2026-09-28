@@ -2,11 +2,29 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Circle, Flag, Play, SlidersHorizontal, Flame, Dumbbell, Target, Zap, Activity } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Circle, Flag, Play, SlidersHorizontal, Flame, Dumbbell, Target, Zap, Activity, Repeat2, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { PlanSelectorModal } from '@/components/PlanSelectorModal';
-import { ProgressionRecommendation } from '@/lib/types';
+import { ExerciseModal } from '@/components/ExerciseModal';
+import { Badge } from '@/components/ui/Badge';
+import { Exercise, ProgressionRecommendation, RoutineExerciseSwap } from '@/lib/types';
 import styles from './plan.module.css';
+
+type PlanExercise = {
+  id: string;
+  exercise: string;
+  exercise_name: string;
+  primary_muscle: string;
+  focus?: string;
+  target_sets: number;
+  target_reps: string;
+  rest_seconds: number;
+  target_rpe?: number;
+  suggested_weight_kg?: number;
+  progression?: ProgressionRecommendation | null;
+  notes?: string;
+  swap?: RoutineExerciseSwap | null;
+};
 
 type ProgramDay = {
   id: string;
@@ -18,19 +36,7 @@ type ProgramDay = {
     id: string;
     name: string;
     description?: string;
-    exercises?: Array<{
-      id: string;
-      exercise_name: string;
-      primary_muscle: string;
-      focus?: string;
-      target_sets: number;
-      target_reps: string;
-      rest_seconds: number;
-      target_rpe?: number;
-      suggested_weight_kg?: number;
-      progression?: ProgressionRecommendation | null;
-      notes?: string;
-    }>;
+    exercises?: PlanExercise[];
   };
 };
 
@@ -69,6 +75,9 @@ export default function WorkoutPlanPage() {
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [swapTarget, setSwapTarget] = useState<{ dayNumber: number; routineExerciseId: string } | null>(null);
+  const [swappingId, setSwappingId] = useState<string | null>(null);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
 
   const loadPlan = () => {
     api.getWorkoutPlan()
@@ -83,6 +92,45 @@ export default function WorkoutPlanPage() {
   useEffect(() => {
     loadPlan();
   }, []);
+
+  // Merge a freshly-swapped ProgramDay (server response) back into local state without a refetch.
+  const applyUpdatedDay = (updatedDay: ProgramDay) => {
+    setPayload((prev) =>
+      prev
+        ? {
+            ...prev,
+            days: prev.days.map((d) => (d.day_number === updatedDay.day_number ? updatedDay : d)),
+          }
+        : prev
+    );
+  };
+
+  const runSwap = async (routineExerciseId: string, dayNumber: number, exerciseId: string) => {
+    setSwappingId(routineExerciseId);
+    try {
+      const updatedDay = await api.swapExercise({
+        day_number: dayNumber,
+        routine_exercise_id: routineExerciseId,
+        exercise_id: exerciseId,
+      });
+      applyUpdatedDay(updatedDay);
+    } catch (err) {
+      console.error('Failed to swap exercise:', err);
+      alert('Failed to swap exercise. Please try again.');
+    } finally {
+      setSwappingId(null);
+      setSwapTarget(null);
+    }
+  };
+
+  const handlePickReplacement = (ex: Exercise) => {
+    if (!swapTarget) return;
+    runSwap(swapTarget.routineExerciseId, swapTarget.dayNumber, ex.id);
+  };
+
+  const handleRevertSwap = (exercise: PlanExercise, dayNumber: number) => {
+    runSwap(exercise.id, dayNumber, exercise.exercise);
+  };
 
   const days = useMemo(() => payload?.days || [], [payload]);
   const program = payload?.program;
@@ -262,14 +310,25 @@ export default function WorkoutPlanPage() {
                     <th className={styles.exerciseTh}>RPE</th>
                     <th className={styles.exerciseTh}>Suggested load</th>
                     <th className={styles.exerciseTh}>Coaching note</th>
+                    <th className={styles.exerciseTh}>Swap</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(routine?.exercises || []).map((exercise) => (
                     <tr key={exercise.id} className={styles.exerciseTr}>
                       <td className={styles.exerciseTd}>
-                        <strong>{exercise.exercise_name}</strong><br />
-                        <small className={styles.exerciseTdSecondary}>{exercise.focus || exercise.primary_muscle}</small>
+                        <div className={styles.exerciseNameRow}>
+                          <strong>{exercise.swap ? exercise.swap.exercise_name : exercise.exercise_name}</strong>
+                          {exercise.swap && <Badge variant="amber" size="sm">Swapped</Badge>}
+                        </div>
+                        <small className={styles.exerciseTdSecondary}>
+                          {exercise.swap ? exercise.swap.primary_muscle : (exercise.focus || exercise.primary_muscle)}
+                          {exercise.swap && (
+                            <>
+                              {' '}&middot; recommended: {exercise.exercise_name}
+                            </>
+                          )}
+                        </small>
                       </td>
                       <td className={styles.exerciseTd}>{exercise.target_sets}</td>
                       <td className={styles.exerciseTd}>{exercise.target_reps}</td>
@@ -279,11 +338,36 @@ export default function WorkoutPlanPage() {
                         {plannedLoad(exercise) ? `${plannedLoad(exercise)} kg` : '--'}
                       </td>
                       <td className={`${styles.exerciseTd} ${styles.exerciseTdSecondary}`}>{exercise.notes || '--'}</td>
+                      <td className={styles.exerciseTd}>
+                        <div className={styles.swapActions}>
+                          <button
+                            type="button"
+                            className={styles.swapBtn}
+                            disabled={swappingId === exercise.id}
+                            onClick={() => {
+                              setSwapTarget({ dayNumber: selectedDay, routineExerciseId: exercise.id });
+                              setIsSwapModalOpen(true);
+                            }}
+                          >
+                            <Repeat2 size={13} /> Swap
+                          </button>
+                          {exercise.swap && (
+                            <button
+                              type="button"
+                              className={styles.swapBtn}
+                              disabled={swappingId === exercise.id}
+                              onClick={() => handleRevertSwap(exercise, selectedDay)}
+                            >
+                              <RotateCcw size={13} /> Revert
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {!routine?.exercises?.length && (
                     <tr>
-                      <td colSpan={7} className={styles.noExercisesTd}>No exercises configured for this day.</td>
+                      <td colSpan={8} className={styles.noExercisesTd}>No exercises configured for this day.</td>
                     </tr>
                   )}
                 </tbody>
@@ -300,6 +384,15 @@ export default function WorkoutPlanPage() {
           loadPlan();
         }}
         initialWeight={program?.start_weight_kg || 75.0}
+      />
+
+      <ExerciseModal
+        isOpen={isSwapModalOpen}
+        onClose={() => {
+          setIsSwapModalOpen(false);
+          setSwapTarget(null);
+        }}
+        onSelectExercise={handlePickReplacement}
       />
     </div>
   );

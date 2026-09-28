@@ -187,6 +187,7 @@
   font-size: 0.95rem;
   outline: none;
   transition: all 0.2s ease;
+  color-scheme: dark;
 }
 
 .input:focus {
@@ -202,6 +203,12 @@
 .fieldError {
   font-size: 0.8rem;
   color: #F87171;
+  margin-top: 0.25rem;
+}
+
+.fieldHint {
+  font-size: 0.8rem;
+  color: #94A3B8;
   margin-top: 0.25rem;
 }
 

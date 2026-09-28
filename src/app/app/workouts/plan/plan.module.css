@@ -361,3 +361,42 @@
   color: var(--text-secondary);
   text-align: center;
 }
+
+.exerciseNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.swapActions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.swapBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.swapBtn:hover:not(:disabled) {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-bright);
+}
+
+.swapBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

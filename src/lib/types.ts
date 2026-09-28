@@ -80,6 +80,16 @@ export interface RoutineExercise {
   suggested_weight_kg?: number | null;
   focus?: string;
   progression?: ProgressionRecommendation | null;
+  /** Per-ProgramDay override of which exercise fills this slot; null when the recommended exercise is still in use. */
+  swap?: RoutineExerciseSwap | null;
+}
+
+/** The replacement exercise for a per-day swap (backend ProgramDayExerciseSwap). Prescription numbers (sets/reps/rest/etc.) are NOT overridden. */
+export interface RoutineExerciseSwap {
+  id: string;
+  exercise: string;
+  exercise_name: string;
+  primary_muscle: string;
 }
 
 /** Server-computed next-session prescription (backend/workouts/progression.py). */
@@ -113,6 +123,14 @@ export interface WorkoutSet {
   reps: number;
   rpe?: number | null;
   completed: boolean;
+  duration_seconds?: number | null;
+  distance_km?: number | null;
+  incline_percent?: number | null;
+  speed_kmh?: number | null;
+  resistance_level?: number | null;
+  calories?: number | null;
+  heart_rate?: number | null;
+  intensity?: string;
 }
 
 export interface WorkoutExercise {

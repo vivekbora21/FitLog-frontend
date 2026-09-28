@@ -136,15 +136,28 @@ export default function WorkoutHistoryPage() {
                         </div>
 
                         <div className={styles.setsRow}>
-                          {we.sets.map((s, sIdx) => (
-                            <div key={sIdx} className={styles.setChip}>
-                              <span className={styles.setNum}>#{s.set_number}</span>
-                              <strong className={styles.setWeight}>{s.weight_kg}kg</strong> × {s.reps}
-                              {s.set_type !== 'NORMAL' && (
-                                <span className={styles.setTypeTag}>({s.set_type})</span>
-                              )}
-                            </div>
-                          ))}
+                          {we.sets.map((s, sIdx) => {
+                            const isCardio = (we.primary_muscle || '').toLowerCase() === 'cardio' || !!s.duration_seconds || (s.incline_percent !== null && s.incline_percent !== undefined);
+                            return (
+                              <div key={sIdx} className={styles.setChip}>
+                                <span className={styles.setNum}>#{s.set_number}</span>
+                                {isCardio ? (
+                                  <strong className={styles.setWeight}>
+                                    {s.duration_seconds ? `${Math.round(s.duration_seconds / 60)}m` : (s.reps ? `${s.reps}m` : 'Cardio')}
+                                    {s.incline_percent !== null && s.incline_percent !== undefined ? ` · ${s.incline_percent}% inc` : ''}
+                                    {s.speed_kmh ? ` · ${s.speed_kmh}k/h` : ''}
+                                  </strong>
+                                ) : (
+                                  <>
+                                    <strong className={styles.setWeight}>{s.weight_kg}kg</strong> × {s.reps}
+                                  </>
+                                )}
+                                {s.set_type !== 'NORMAL' && (
+                                  <span className={styles.setTypeTag}>({s.set_type})</span>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}

@@ -114,19 +114,18 @@ const GOAL_OPTIONS = [
 
 const WORKOUT_OPTIONS = [2, 3, 4, 5, 6];
 
-function dobFromAge(age: number): string {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - age);
-  return d.toISOString().split('T')[0];
-}
-
-function ageFromDob(dob?: string | null): string {
-  if (!dob) return '';
-  const birth = new Date(dob);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age -= 1;
-  return age > 0 ? String(age) : '';
+function calculateAge(dobStr?: string | null): number | null {
+  if (!dobStr || !/^\d{4}-\d{2}-\d{2}$/.test(dobStr)) return null;
+  const [y, m, d] = dobStr.split('-').map(Number);
+  const birthDate = new Date(y, (m || 1) - 1, d || 1);
+  if (isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age >= 0 && age < 130 ? age : null;
 }
 
 const round1 = (n: number) => Number(n.toFixed(1));
@@ -141,7 +140,7 @@ export default function WebOnboardingPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [sex, setSex] = useState<string>('MALE');
-  const [age, setAge] = useState('');
+  const [dob, setDob] = useState('');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
 
@@ -169,7 +168,7 @@ export default function WebOnboardingPage() {
       setFirstName(user.first_name || '');
       setLastName(user.last_name || '');
       if (user.profile?.sex) setSex(user.profile.sex);
-      if (user.profile?.date_of_birth) setAge(ageFromDob(user.profile.date_of_birth));
+      if (user.profile?.date_of_birth) setDob(user.profile.date_of_birth);
       if (user.profile?.height_cm) setHeight(String(user.profile.height_cm));
       if (user.profile?.weight_kg) setWeight(String(user.profile.weight_kg));
       if (user.profile?.fitness_goal) setGoal(user.profile.fitness_goal);
@@ -184,14 +183,23 @@ export default function WebOnboardingPage() {
     return 'HABIT_21';
   }, [goal]);
 
-  const ageVal = age ? Number(age) : null;
+  const cleanDob = dob.trim();
+  const parsedAge = calculateAge(cleanDob);
   const heightVal = height ? Number(height) : null;
   const weightVal = weight ? Number(weight) : null;
 
   const validateStep0 = () => {
     const next: Record<string, string> = {};
     if (!sex) next.sex = 'Please select biological sex';
-    if (ageVal == null || isNaN(ageVal) || ageVal < 13 || ageVal > 100) next.age = 'Age must be 13–100';
+    if (!cleanDob) {
+      next.dob = 'Date of birth is required';
+    } else if (parsedAge == null) {
+      next.dob = 'Please enter a valid date of birth';
+    } else if (parsedAge < 13) {
+      next.dob = 'Must be at least 13 years old';
+    } else if (parsedAge > 100) {
+      next.dob = 'Age must be 100 or younger';
+    }
     if (heightVal == null || isNaN(heightVal) || heightVal < 100 || heightVal > 250) next.height = 'Height must be 100–250 cm';
     if (weightVal == null || isNaN(weightVal) || weightVal < 30 || weightVal > 300) next.weight = 'Weight must be 30–300 kg';
     setErrors(next);
@@ -232,7 +240,7 @@ export default function WebOnboardingPage() {
         last_name: lastName.trim() || undefined,
         profile: {
           sex: sex || undefined,
-          date_of_birth: ageVal ? dobFromAge(Math.round(ageVal)) : undefined,
+          date_of_birth: cleanDob || undefined,
           height_cm: heightVal || undefined,
           weight_kg: weightVal || undefined,
           activity_level: activity,
@@ -402,17 +410,19 @@ export default function WebOnboardingPage() {
               </div>
 
               <div className={styles.fieldGroup}>
-                <label className={styles.label}>Age</label>
+                <label className={styles.label}>Date of Birth</label>
                 <input
-                  type="number"
-                  className={`${styles.input} ${errors.age ? styles.inputError : ''}`}
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                  placeholder="e.g. 26"
-                  min="13"
-                  max="100"
+                  type="date"
+                  className={`${styles.input} ${errors.dob ? styles.inputError : ''}`}
+                  value={dob}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setDob(e.target.value)}
                 />
-                {errors.age && <span className={styles.fieldError}>{errors.age}</span>}
+                {errors.dob ? (
+                  <span className={styles.fieldError}>{errors.dob}</span>
+                ) : cleanDob && parsedAge != null ? (
+                  <span className={styles.fieldHint}>{parsedAge} years old</span>
+                ) : null}
               </div>
 
               <div className={styles.formGrid}>
