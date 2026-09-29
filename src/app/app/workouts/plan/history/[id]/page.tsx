@@ -110,6 +110,7 @@ function DayRow({ day, currentDay }: { day: JourneyDay; currentDay: number }) {
               Completed {new Date(session.completed_at || session.started_at).toLocaleString()}
               {' · '}{Math.round(session.duration_seconds / 60)} min
               {session.overall_rpe ? ` · RPE ${session.overall_rpe}/10` : ''}
+              {session.total_calories ? ` · ${session.total_calories.toLocaleString()} kcal` : ''}
             </div>
             {session.notes && <p className={styles.sessionNotes}>&ldquo;{session.notes}&rdquo;</p>}
             <table className={styles.exerciseTable}>

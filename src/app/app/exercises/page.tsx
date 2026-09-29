@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Dumbbell, Trophy, Info, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Dumbbell, Trophy, Info, Sparkles, ChevronLeft, ChevronRight, Flame } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Exercise, PersonalRecord } from '@/lib/types';
 import { Card } from '@/components/ui/Card';
@@ -193,6 +193,11 @@ export default function ExerciseLibraryPage() {
                       <Badge variant="emerald">{ex.primary_muscle_name}</Badge>
                       <Badge variant="cyan">{ex.equipment_name}</Badge>
                       {ex.gym_name && <Badge variant="violet">{ex.gym_name}</Badge>}
+                      {ex.met_value != null && (
+                        <Badge variant="amber" title="Metabolic Equivalent of Task">
+                          <Flame size={12} /> MET {ex.met_value}
+                        </Badge>
+                      )}
                     </div>
 
                     <p className={styles.instructions}>
@@ -261,6 +266,11 @@ export default function ExerciseLibraryPage() {
               <Badge variant="emerald">{activeExercise.primary_muscle_name}</Badge>
               <Badge variant="cyan">{activeExercise.equipment_name}</Badge>
               {activeExercise.gym_name && <Badge variant="violet">{activeExercise.gym_name}</Badge>}
+              {activeExercise.met_value != null && (
+                <Badge variant="amber" title="Metabolic Equivalent of Task">
+                  <Flame size={12} /> MET {activeExercise.met_value}
+                </Badge>
+              )}
             </div>
 
             <div>
