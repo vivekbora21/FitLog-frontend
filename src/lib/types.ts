@@ -63,6 +63,7 @@ export interface Exercise {
   equipment_name: string;
   instructions: string;
   video_url?: string | null;
+  met_value?: number | null;
   is_global: boolean;
 }
 
@@ -161,6 +162,8 @@ export interface WorkoutSession {
   notes: string;
   exercises: WorkoutExercise[];
   total_volume_kg: number;
+  /** Sum of each completed set's estimated calories; null if none were recorded. */
+  total_calories?: number | null;
   created_at: string;
 }
 
@@ -525,6 +528,122 @@ export interface DashboardAdherence {
 export type JourneyMode = 'CUT' | 'BULK' | 'FOCUS' | 'RECOMP' | 'HABIT';
 export type PacingStatus = 'ON_TRACK' | 'PACING_ALERT' | 'OFF_TRACK' | 'NO_PROGRAM';
 
+// --- Guided Plan Builder (blueprints, preview & create) ---
+
+export interface BlueprintPhase {
+  name: string;
+  start_day: number;
+  end_day: number;
+}
+
+export interface BlueprintWorkoutExercise {
+  exercise_name: string;
+  sets: number;
+  reps: string;
+  rpe: number | null;
+  rest_seconds: number;
+  progression_rule: string;
+}
+
+export interface BlueprintMealSlot {
+  sample_foods: string[];
+  protein_g: number;
+  kcal: number;
+  fat_g: number;
+  swap_options: string[];
+}
+
+export interface Blueprint {
+  id: string;
+  slug: string;
+  name: string;
+  mode: JourneyMode;
+  description: string;
+  difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  default_duration_days: number;
+  default_days_per_week: number;
+  pacing_kg_per_week: number;
+  phases: BlueprintPhase[];
+  workout_templates: Record<string, BlueprintWorkoutExercise[]>;
+  meal_templates: Record<string, BlueprintMealSlot>;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanRequest {
+  blueprint_slug?: string;
+  mode?: JourneyMode;
+  duration_days: number;
+  days_per_week: number;
+  weekdays?: number[];
+  current_weight_kg: number;
+  goal_weight_kg?: number;
+  height_cm: number;
+  age: number;
+  sex: 'MALE' | 'FEMALE';
+  name?: string;
+}
+
+export interface PlanDayTargets {
+  daily_calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}
+
+export interface PlanDayRoadmap {
+  day_number: number;
+  phase: string;
+  is_rest: boolean;
+  workout: BlueprintWorkoutExercise[] | null;
+  targets: PlanDayTargets;
+  expected_weight_kg: number;
+}
+
+export interface PlanFeasibility {
+  status: 'safe' | 'aggressive' | 'unrealistic';
+  message: string;
+}
+
+export interface PlanRoadmap {
+  summary: {
+    duration_days: number;
+    workouts_per_week: number;
+    start_weight_kg: number;
+    goal_weight_kg: number | null;
+    daily_calories: number;
+    weekly_rate_kg: number;
+  };
+  feasibility: PlanFeasibility;
+  phases: BlueprintPhase[];
+  days: PlanDayRoadmap[];
+  meal_template: Record<string, BlueprintMealSlot>;
+  targets: {
+    training_day: PlanDayTargets;
+    rest_day: PlanDayTargets;
+  };
+  warnings: string[];
+}
+
+export interface CreatePlanResponse {
+  message: string;
+  program: {
+    id: string;
+    name: string;
+    mode: JourneyMode;
+    mode_label: string;
+    start_date: string;
+    duration_days: number;
+    current_day: number;
+    start_weight_kg: number;
+    target_weight_kg: number | null;
+    target_weekly_rate_kg: number;
+  };
+  roadmap: PlanRoadmap;
+}
+
 export interface TrajectoryPoint {
   day: number;
   date: string;
@@ -637,6 +756,7 @@ export interface JourneyDayCompletedSession {
   notes: string;
   exercises: WorkoutExercise[];
   total_volume_kg: number;
+  total_calories?: number | null;
 }
 
 export interface JourneyDay {

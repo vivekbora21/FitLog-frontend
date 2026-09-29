@@ -1,4 +1,4 @@
-import type { Food, JourneyDetail, MacroTarget, RecommendedTargets, RecentFood, NutritionDayResponse, TargetField, TargetsPayload } from './types';
+import type { Blueprint, CreatePlanResponse, Food, JourneyDetail, MacroTarget, PlanRequest, PlanRoadmap, RecommendedTargets, RecentFood, NutritionDayResponse, TargetField, TargetsPayload } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -444,6 +444,25 @@ class ApiClient {
     target_focus_1rm?: number | null;
   }) {
     return this.request<any>('/workouts/sessions/start-journey/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // Guided Plan Builder
+  async getBlueprints() {
+    return this.request<{ blueprints: Blueprint[] }>('/plans/blueprints/');
+  }
+
+  async previewPlan(payload: PlanRequest) {
+    return this.request<PlanRoadmap>('/plans/preview/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async createPlan(payload: PlanRequest) {
+    return this.request<CreatePlanResponse>('/plans/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
