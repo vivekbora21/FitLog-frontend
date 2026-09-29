@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   X,
   Flame,
@@ -148,11 +148,17 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
   }, [isOpen, dismissible, onClose]);
 
   // Fetch blueprints once, when the "ready-made plan" mode-selection step is reached.
+  // The in-flight guard lives in a ref (not state): if it were `blueprintsLoading` state,
+  // calling setBlueprintsLoading(true) below would itself change this effect's own
+  // dependency, tearing it down (cancelled = true) and re-running it before the fetch
+  // resolves - permanently orphaning the request and leaving the UI stuck loading.
+  const blueprintsFetchingRef = useRef(false);
   useEffect(() => {
     if (!isOpen || step !== 1 || path !== 'blueprint') return;
-    if (blueprints || blueprintsLoading) return;
+    if (blueprints || blueprintsFetchingRef.current) return;
 
     let cancelled = false;
+    blueprintsFetchingRef.current = true;
     setBlueprintsLoading(true);
     setBlueprintsError(null);
     api
@@ -166,13 +172,14 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
         setBlueprintsError(extractApiError(err, 'Failed to load blueprints.'));
       })
       .finally(() => {
+        blueprintsFetchingRef.current = false;
         if (!cancelled) setBlueprintsLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [isOpen, step, path, blueprints, blueprintsLoading]);
+  }, [isOpen, step, path, blueprints]);
 
   const buildPlanRequest = (): PlanRequest => ({
     blueprint_slug: path === 'blueprint' ? selectedBlueprintSlug || undefined : undefined,
