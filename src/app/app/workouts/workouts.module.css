@@ -191,3 +191,37 @@
   color: var(--color-cyan);
   font-weight: 600;
 }
+
+
+.loadingState {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.errorCard {
+  display: grid;
+  justify-items: start;
+  gap: 0.65rem;
+  padding: 2rem;
+  border: 1px solid var(--color-rose);
+  background: color-mix(in srgb, var(--color-rose) 7%, var(--bg-surface));
+}
+
+.errorCard p { color: var(--text-secondary); }
+.errorIcon { color: var(--color-rose); }
+
+@media (max-width: 640px) {
+  .container { gap: 1.25rem; }
+  .header { align-items: stretch; }
+  .title { font-size: 1.55rem; }
+  .header > button, .header a { width: 100%; }
+  .sessionHeader { align-items: stretch; }
+  .volumeSection { justify-content: space-between; width: 100%; gap: 0.75rem; }
+  .volumeTextWrap { text-align: left; }
+  .exerciseBlock { padding: 0.75rem; }
+  .setChip { padding: 0.4rem 0.55rem; }
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
+  .sessionHeader { align-items: center; }
+}

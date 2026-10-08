@@ -431,3 +431,18 @@
 .barAmber {
   background: var(--color-amber);
 }
+
+
+/* Compact, mobile-friendly plan panel */
+.card { border-radius: 18px; box-shadow: var(--shadow-md); }
+.planTitle { font-size: clamp(1.35rem, 3vw, 2rem); }
+.pillarCard { border-radius: 12px; }
+.copilotBox { border-radius: 12px; }
+@media (max-width: 700px) {
+  .card { padding: 1.15rem; }
+  .headerRow { margin-bottom: .85rem; }
+  .rightActions { width: 100%; justify-content: space-between; }
+  .scoreBox { align-items: flex-start; text-align: left; }
+  .pillarsGrid { gap: .65rem; margin: .8rem 0; }
+  .pillarCard { padding: .75rem; }
+}

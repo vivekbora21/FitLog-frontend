@@ -15,7 +15,7 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ activityDates 
   for (let i = 76; i >= 0; i--) {
     const d = new Date();
     d.setDate(today.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const count = activityDates[dateStr] || 0;
     days.push({
       dateStr,

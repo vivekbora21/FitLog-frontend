@@ -229,3 +229,35 @@
   display: grid;
   gap: 0.5rem;
 }
+
+
+/* Dashboard overview refresh */
+.page { max-width: 1480px; margin: 0 auto; gap: 1.15rem; }
+.todayCard { background: linear-gradient(115deg, #082d30 0%, #0a4447 55%, #147f75 100%); border: 0; border-radius: 18px; color: #fff; padding: 1.5rem 1.65rem; box-shadow: 0 16px 30px rgba(8, 54, 58, .18); }
+.todayCard .eyebrow, .todayCard .focus { color: #fff; }
+.todayCard .eyebrow { opacity: .75; }
+.todayCard .focus { font-size: clamp(1.5rem, 2.2vw, 2.25rem); max-width: 24ch; }
+.todayCard .facts { border-top-color: rgba(255,255,255,.2); }
+.todayCard .factLabel { color: rgba(255,255,255,.64); }
+.todayCard .factValue, .todayCard .factNote { color: #fff; }
+.todayCard .actionSecondary { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.3); border-radius: 999px; }
+.todayCard .actionPrimary { background: #18c9ac; color: #052b20; border-radius: 999px; padding-inline: 1rem; }
+.trends { margin-top: .25rem; gap: .8rem; }
+.trendsHeading { color: var(--text-primary); font-size: 1.25rem; letter-spacing: -.02em; text-transform: none; }
+.cardPad { border-radius: 16px; box-shadow: var(--shadow-md); }
+.anchorCard { border-radius: 12px; }
+@media (min-width: 1050px) {
+  .page { grid-template-columns: minmax(0, 1.5fr) minmax(300px, .8fr); align-items: start; }
+  .page > :first-child, .page > .todayCard, .page > .trends { grid-column: 1 / -1; }
+  .page > .todayCard { margin-top: -.25rem; }
+  .page > .trends { display: grid; grid-template-columns: 1.2fr .8fr; align-items: start; }
+  .page > .trends > .trendsHeading { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .page { gap: .9rem; }
+  .todayCard { padding: 1.15rem; border-radius: 17px; }
+  .todayHeader { gap: .8rem; }
+  .todayActions { width: 100%; }
+  .todayActions a { flex: 1; justify-content: center; text-align: center; border-radius: 999px; }
+  .facts { gap: .8rem 1.05rem; }
+}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dumbbell, Plus, Calendar, Clock, ChevronDown, ChevronUp, Flame, Play } from 'lucide-react';
+import { Dumbbell, Calendar, Clock, ChevronDown, ChevronUp, Play, AlertTriangle, RefreshCw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { WorkoutSession } from '@/lib/types';
 import { Card } from '@/components/ui/Card';
@@ -15,6 +15,7 @@ export default function WorkoutHistoryPage() {
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
@@ -22,7 +23,7 @@ export default function WorkoutHistoryPage() {
       .then((data) => {
         setSessions(data.results || data);
       })
-      .catch((err) => console.error(err))
+      .catch((err) => { console.error(err); setError('We could not load your workout history.'); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -49,7 +50,20 @@ export default function WorkoutHistoryPage() {
 
       {/* Sessions List */}
       {loading ? (
-        <div className={styles.loading}>Loading workout history...</div>
+        <div className={styles.loadingState} role="status" aria-label="Loading workout history">
+          <div className="skeleton" style={{ width: '35%', height: 20 }} />
+          <div className="skeleton" style={{ width: '100%', height: 132, marginTop: 16 }} />
+          <div className="skeleton" style={{ width: '100%', height: 132, marginTop: 16 }} />
+        </div>
+      ) : error ? (
+        <Card className={styles.errorCard} role="alert">
+          <AlertTriangle size={32} className={styles.errorIcon} />
+          <h3>Could not load workouts</h3>
+          <p>{error}</p>
+          <Button variant="primary" onClick={() => { setLoading(true); api.getWorkouts().then((data) => setSessions(data.results || data)).catch(() => setError('We could not load your workout history.')).finally(() => setLoading(false)); }}>
+            <RefreshCw size={16} /> Try again
+          </Button>
+        </Card>
       ) : sessions.length === 0 ? (
         <Card className={styles.emptyCard}>
           <Dumbbell size={40} className={styles.emptyIcon} />

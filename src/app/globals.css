@@ -2,10 +2,10 @@
 
 :root {
   /* Athletic Clean Light Palette */
-  --bg-base: #F8FAFC;
-  --bg-canvas: #F8FAFC;
+  --bg-base: #F6F8FA;
+  --bg-canvas: #EEF2F6;
   --bg-surface: #FFFFFF;
-  --bg-surface-elevated: #F1F5F9;
+  --bg-surface-elevated: #F8FAFC;
   --bg-surface-hover: #E2E8F0;
   --bg-glass: rgba(255, 255, 255, 0.92);
   --bg-glass-elevated: rgba(255, 255, 255, 0.98);
@@ -16,8 +16,8 @@
   --border-glow: rgba(16, 185, 129, 0.4);
 
   /* Primary Brand - Athletic Forest / Emerald */
-  --color-primary: #059669;
-  --color-primary-hover: #047857;
+  --color-primary: #0F766E;
+  --color-primary-hover: #0D645D;
   --color-primary-light: #10B981;
   --color-primary-glow: rgba(16, 185, 129, 0.12);
 
@@ -32,7 +32,7 @@
   /* Typography Colors */
   --text-primary: #0F172A;
   --text-secondary: #475569;
-  --text-muted: #94A3B8;
+  --text-muted: #64748B;
   --text-inverse: #FFFFFF;
 
   /* Spacing */
@@ -78,6 +78,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  color-scheme: light dark;
 }
 
 html, body {
@@ -504,4 +508,54 @@ button, input, select, textarea {
   .mobile-sidebar-close-btn {
     display: flex !important;
   }
+}
+
+
+/* Shared semantic dark palette. Components use the same variable names in mobile/web. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-base: #080B11;
+    --bg-canvas: #0B0F19;
+    --bg-surface: #111827;
+    --bg-surface-elevated: #1E293B;
+    --bg-surface-hover: #283548;
+    --bg-glass: rgba(17, 24, 39, 0.94);
+    --border-subtle: #1F2937;
+    --border-bright: #475569;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --text-inverse: #080B11;
+    --color-primary: #10B981;
+    --color-primary-hover: #34D399;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-cyan);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Accessibility display scale: QA can toggle this with document.documentElement.dataset.textSize = 'large'. */
+html[data-text-size='large'] {
+  font-size: 112.5%;
+}
+html[data-text-size='large'] button,
+html[data-text-size='large'] a,
+html[data-text-size='large'] input,
+html[data-text-size='large'] select,
+html[data-text-size='large'] textarea {
+  min-height: 44px;
+}
+html[data-text-size='large'] .app-main-content {
+  line-height: 1.55;
 }

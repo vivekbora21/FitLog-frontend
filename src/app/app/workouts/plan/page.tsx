@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Circle, Flag, Play, SlidersHorizontal, Flame, Dumbbell, Target, Zap, Activity, Repeat2, RotateCcw } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Circle, Flag, Play, SlidersHorizontal, Repeat2, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { PlanSelectorModal } from '@/components/PlanSelectorModal';
 import { ExerciseModal } from '@/components/ExerciseModal';
@@ -177,12 +177,6 @@ export default function WorkoutPlanPage() {
           >
             <SlidersHorizontal size={16} /> Mode &amp; Plan
           </button>
-          <Link
-            href="/app/workouts/active"
-            className={styles.startDayBtn}
-          >
-            <Play size={16} /> Start Current Day
-          </Link>
         </div>
       </header>
 

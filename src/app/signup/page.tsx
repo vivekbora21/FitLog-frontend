@@ -185,6 +185,13 @@ export default function SignupPage() {
     <GuestGuard>
       <div className={styles.shell}>
         <div className={styles.containerWide}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className={styles.badgePill}>
+              <div className={styles.badgeDot} />
+              <span className={styles.badgeText}>ATHLETIC PERFORMANCE SYSTEM</span>
+            </div>
+          </div>
+
           <div className={styles.logo} onClick={() => router.push('/')} role="button" tabIndex={0}>
             <div className={styles.logoIcon}>
               <Dumbbell size={22} color="#080B11" strokeWidth={2.5} />
@@ -193,6 +200,23 @@ export default function SignupPage() {
           </div>
 
           <Card elevated className={styles.card}>
+            {/* Top Segmented Tab Switcher */}
+            <div className={styles.segmentedControl}>
+              <button
+                type="button"
+                className={styles.segmentBtn}
+                onClick={() => router.push('/login')}
+              >
+                Log In
+              </button>
+              <button
+                type="button"
+                className={`${styles.segmentBtn} ${styles.segmentBtnActive}`}
+              >
+                Sign Up
+              </button>
+            </div>
+
             <h1 className={styles.title}>Create your account</h1>
             <p className={styles.subtitle}>Start tracking your workouts, nutrition, and progress.</p>
 

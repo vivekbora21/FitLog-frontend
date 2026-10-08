@@ -1,6 +1,14 @@
-import type { Blueprint, CreatePlanResponse, Food, JourneyDetail, MacroTarget, PlanRequest, PlanRoadmap, RecommendedTargets, RecentFood, NutritionDayResponse, TargetField, TargetsPayload } from './types';
+import { validateApiPayload, type DateRangeParams } from '@fitlog/shared';
+import type { Blueprint, CreatePlanResponse, Food, JourneyDetail, MacroTarget, PlanRequest, PlanRoadmap, RecommendedTargets, RecentFood, NutritionDayResponse, TargetField, TargetsPayload, WeightEntry, BodyMeasurement } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+function localDateKey(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 class ApiClient {
   private token: string | null = null;
@@ -44,6 +52,7 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'X-API-Version': '1',
       ...(options.headers as Record<string, string>),
     };
 
@@ -83,7 +92,7 @@ class ApiClient {
       return {} as T;
     }
 
-    return res.json();
+    return validateApiPayload<T>(await res.json());
   }
 
   // Auth
@@ -321,22 +330,22 @@ class ApiClient {
   }
 
   // Progress
-  async getWeights(clientId?: string) {
-    const query = clientId ? `?client_id=${clientId}` : '';
-    return this.request<any>(`/progress/weight/${query}`);
+  async getWeights(clientId?: string, range: DateRangeParams = {}) {
+    const params = new URLSearchParams({ ...(clientId ? { client_id: clientId } : {}), ...range });
+    return this.request<WeightEntry[] | { results: WeightEntry[] }>(`/progress/weight/${params.toString() ? `?${params}` : ''}`);
   }
 
   async logWeight(weight_kg: number, body_fat_pct?: number, notes?: string) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateKey();
     return this.request<any>('/progress/weight/', {
       method: 'POST',
       body: JSON.stringify({ date: today, weight_kg, body_fat_pct, notes: notes || '' }),
     });
   }
 
-  async getMeasurements(clientId?: string) {
-    const query = clientId ? `?client_id=${clientId}` : '';
-    return this.request<any>(`/progress/measurements/${query}`);
+  async getMeasurements(clientId?: string, range: DateRangeParams = {}) {
+    const params = new URLSearchParams({ ...(clientId ? { client_id: clientId } : {}), ...range });
+    return this.request<BodyMeasurement[] | { results: BodyMeasurement[] }>(`/progress/measurements/${params.toString() ? `?${params}` : ''}`);
   }
 
   async logMeasurement(data: Record<string, any>) {
@@ -365,9 +374,9 @@ class ApiClient {
   }
 
   // Daily Lifestyle, Steps & Sleep Log
-  async getDailyLogs(clientId?: string) {
-    const query = clientId ? `?client_id=${clientId}` : '';
-    return this.request<any>(`/progress/daily/${query}`);
+  async getDailyLogs(clientId?: string, range: DateRangeParams = {}) {
+    const params = new URLSearchParams({ ...(clientId ? { client_id: clientId } : {}), ...range });
+    return this.request<unknown>(`/progress/daily/${params.toString() ? `?${params}` : ''}`);
   }
 
   async getDailyLogForDate(dateStr: string) {
@@ -383,7 +392,7 @@ class ApiClient {
     energy_level?: number | null;
     recovery_notes?: string;
   }) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateKey();
     return this.request<any>('/progress/daily/', {
       method: 'POST',
       body: JSON.stringify({

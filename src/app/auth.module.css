@@ -275,3 +275,150 @@
   }
 }
 
+/* Badge Pill */
+.badgePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  margin-bottom: 0.85rem;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-primary-light, #10B981);
+}
+
+.badgeText {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-secondary, #94A3B8);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Top Segmented Tab Switcher */
+.segmentedControl {
+  display: flex;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: 1.25rem;
+}
+
+.segmentBtn {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94A3B8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.segmentBtn:hover {
+  color: #FFFFFF;
+}
+
+.segmentBtnActive {
+  background: var(--color-surface, #1E293B);
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Quick Demo Login Section */
+.demoSection {
+  margin-top: 1.5rem;
+  padding-top: 0.25rem;
+}
+
+.demoDividerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.demoDividerLine {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.demoDividerBadge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-secondary, #94A3B8);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.demoCardsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.demoCard {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 0.625rem 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.demoCard:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.demoCardActive {
+  border-color: var(--color-primary-light, #10B981);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.demoCardIconWrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.demoCardName {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.demoCardRolePill {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94A3B8);
+}
+
+

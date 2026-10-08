@@ -29,6 +29,18 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { MetricChart } from '@/components/MetricChart';
 import styles from './measurements.module.css';
+function localDateKey(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function parseDateKey(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 
 type UnitMode = 'cm' | 'in';
 
@@ -70,7 +82,7 @@ export default function BodyMeasurementsPage() {
   const [compareDateB, setCompareDateB] = useState<string>('');
 
   // Form State
-  const [formDate, setFormDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [formDate, setFormDate] = useState<string>(localDateKey());
   const [formNotes, setFormNotes] = useState<string>('');
   const [formValues, setFormValues] = useState<Record<string, string>>({
     neck_cm: '',
@@ -138,7 +150,7 @@ export default function BodyMeasurementsPage() {
 
   // Chronological list (oldest to newest)
   const chronological = useMemo(() => {
-    return [...measurements].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return [...measurements].sort((a, b) => parseDateKey(a.date).getTime() - parseDateKey(b.date).getTime());
   }, [measurements]);
 
   const latest = chronological.length > 0 ? chronological[chronological.length - 1] : null;
@@ -168,7 +180,7 @@ export default function BodyMeasurementsPage() {
       .map((m) => {
         const val = toDisplayNumber(m[selectedMetricKey] as number);
         return {
-          label: new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          label: parseDateKey(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           value: val || 0,
         };
       });
@@ -206,7 +218,7 @@ export default function BodyMeasurementsPage() {
   // Form Handlers
   const handleOpenNewModal = () => {
     setEditingId(null);
-    setFormDate(new Date().toISOString().split('T')[0]);
+    setFormDate(localDateKey());
     setFormNotes('');
     setFormValues({
       neck_cm: '',
@@ -299,12 +311,12 @@ export default function BodyMeasurementsPage() {
   // History log pagination: one page per 7-day window, counted back from the latest check-in
   const historyWeeks = useMemo(() => {
     const DAY_MS = 1000 * 60 * 60 * 24;
-    const sortedDesc = [...measurements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedDesc = [...measurements].sort((a, b) => parseDateKey(b.date).getTime() - parseDateKey(a.date).getTime());
     if (sortedDesc.length === 0) return [];
     const latest = new Date(sortedDesc[0].date).getTime();
     const buckets = new Map<number, BodyMeasurement[]>();
     for (const m of sortedDesc) {
-      const idx = Math.floor(Math.round((latest - new Date(m.date).getTime()) / DAY_MS) / 7);
+      const idx = Math.floor(Math.round((latest - parseDateKey(m.date).getTime()) / DAY_MS) / 7);
       if (!buckets.has(idx)) buckets.set(idx, []);
       buckets.get(idx)!.push(m);
     }

@@ -2,7 +2,18 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dumbbell, ArrowRight, AlertCircle, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import {
+  Dumbbell,
+  ArrowRight,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  Sparkles,
+  Users,
+  ShieldCheck,
+  Check,
+} from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { GuestGuard } from '@/components/GuestGuard';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +26,30 @@ import {
 import { needsOnboarding, onboardingSkipKey } from '@/lib/onboarding';
 import styles from '@/app/auth.module.css';
 
+const DEMO_PERSONAS = [
+  {
+    id: 'alex',
+    name: 'Alex',
+    role: 'Member',
+    email: 'alex.member@example.com',
+    IconComponent: Dumbbell,
+  },
+  {
+    id: 'marcus',
+    name: 'Marcus',
+    role: 'Coach',
+    email: 'coach.marcus@apexfit.com',
+    IconComponent: Users,
+  },
+  {
+    id: 'david',
+    name: 'David',
+    role: 'Owner',
+    email: 'owner@apexfit.com',
+    IconComponent: ShieldCheck,
+  },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -22,6 +57,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
 
   // Field validation and touched states
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
@@ -120,10 +156,25 @@ export default function LoginPage() {
     }
   };
 
+  const handleFillDemo = (persona: (typeof DEMO_PERSONAS)[0]) => {
+    setSelectedPersona(persona.id);
+    setEmail(persona.email);
+    setPassword('fitlog123');
+    setFieldErrors({});
+    setGeneralError(null);
+  };
+
   return (
     <GuestGuard>
       <div className={styles.shell}>
         <div className={styles.container}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className={styles.badgePill}>
+              <div className={styles.badgeDot} />
+              <span className={styles.badgeText}>ATHLETIC PERFORMANCE SYSTEM</span>
+            </div>
+          </div>
+
           <div className={styles.logo} onClick={() => router.push('/')} role="button" tabIndex={0}>
             <div className={styles.logoIcon}>
               <Dumbbell size={22} color="#080B11" strokeWidth={2.5} />
@@ -132,8 +183,22 @@ export default function LoginPage() {
           </div>
 
           <Card elevated className={styles.card}>
+            {/* Top Segmented Tab Switcher */}
+            <div className={styles.segmentedControl}>
+              <button type="button" className={`${styles.segmentBtn} ${styles.segmentBtnActive}`}>
+                Log In
+              </button>
+              <button
+                type="button"
+                className={styles.segmentBtn}
+                onClick={() => router.push('/signup')}
+              >
+                Sign Up
+              </button>
+            </div>
+
             <h1 className={styles.title}>Welcome back</h1>
-            <p className={styles.subtitle}>Log in to continue your fitness journey.</p>
+            <p className={styles.subtitle}>Log in to synchronize your workouts, macros, and pacing.</p>
 
             {generalError && (
               <div className={styles.errorBanner} role="alert">
@@ -159,7 +224,10 @@ export default function LoginPage() {
                   className={`${styles.input} ${touched.email && fieldErrors.email ? styles.inputError : ''}`}
                   placeholder="you@example.com"
                   value={email}
-                  onChange={handleEmailChange}
+                  onChange={(e) => {
+                    setSelectedPersona(null);
+                    handleEmailChange(e);
+                  }}
                   onBlur={() => handleBlur('email')}
                   autoComplete="email"
                   aria-invalid={touched.email && !!fieldErrors.email}
@@ -185,7 +253,10 @@ export default function LoginPage() {
                     className={`${styles.passwordInput} ${touched.password && fieldErrors.password ? styles.inputError : ''}`}
                     placeholder="••••••••"
                     value={password}
-                    onChange={handlePasswordChange}
+                    onChange={(e) => {
+                      setSelectedPersona(null);
+                      handlePasswordChange(e);
+                    }}
                     onBlur={() => handleBlur('password')}
                     autoComplete="current-password"
                     aria-invalid={touched.password && !!fieldErrors.password}
@@ -219,6 +290,43 @@ export default function LoginPage() {
                 {!submitting && <ArrowRight size={16} />}
               </Button>
             </form>
+
+            {/* Quick Demo Access */}
+            <div className={styles.demoSection}>
+              <div className={styles.demoDividerRow}>
+                <div className={styles.demoDividerLine} />
+                <div className={styles.demoDividerBadge}>
+                  <Sparkles size={12} color="#10B981" />
+                  <span>QUICK DEMO LOGIN</span>
+                </div>
+                <div className={styles.demoDividerLine} />
+              </div>
+              <div className={styles.demoCardsRow}>
+                {DEMO_PERSONAS.map((p) => {
+                  const isSelected = selectedPersona === p.id;
+                  const Icon = p.IconComponent;
+                  return (
+                    <div
+                      key={p.id}
+                      className={`${styles.demoCard} ${isSelected ? styles.demoCardActive : ''}`}
+                      onClick={() => handleFillDemo(p)}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className={styles.demoCardIconWrap}>
+                        {isSelected ? (
+                          <Check size={13} color="#10B981" strokeWidth={2.5} />
+                        ) : (
+                          <Icon size={13} color="#94A3B8" />
+                        )}
+                      </div>
+                      <span className={styles.demoCardName}>{p.name}</span>
+                      <span className={styles.demoCardRolePill}>{p.role}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
             <p className={styles.footer}>
               Don&apos;t have an account?{' '}

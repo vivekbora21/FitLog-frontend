@@ -31,7 +31,7 @@ export default function ClientDetailPage() {
           api.getPersonalRecords(clientId),
         ]);
         setWorkouts(wData.results || wData);
-        setWeights(wtData.results || wtData);
+        setWeights(Array.isArray(wtData) ? wtData : wtData.results);
         setPrs(prData.results || prData);
       } catch (err) {
         console.error(err);

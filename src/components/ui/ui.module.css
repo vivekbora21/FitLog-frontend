@@ -34,7 +34,7 @@
 }
 
 .secondary {
-  background: #FFFFFF;
+  background: var(--bg-surface);
   color: var(--text-primary);
   border-color: var(--border-subtle);
   box-shadow: var(--shadow-sm);
@@ -98,7 +98,7 @@
 
 /* Card */
 .card {
-  background: #FFFFFF;
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
@@ -107,7 +107,7 @@
 }
 
 .elevated {
-  background: #FFFFFF;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-lg);
   border-color: var(--border-bright);
 }
@@ -136,7 +136,7 @@
 }
 
 .modalContent {
-  background: #FFFFFF;
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   max-width: 34rem;

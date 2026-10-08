@@ -400,3 +400,18 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+
+@media (max-width: 640px) {
+  .container { gap: 0.9rem; }
+  .header { align-items: stretch; }
+  .headerTitle { font-size: 1.55rem; }
+  .headerActions { width: 100%; }
+  .headerActions > * { flex: 1 1 100%; justify-content: center; }
+  .progressOverviewGrid { gap: 0.75rem; }
+  .dayTrackGrid { overflow-x: auto; grid-auto-flow: column; grid-auto-columns: minmax(2.1rem, 1fr); padding-bottom: 0.35rem; }
+  .dayCardHeader { align-items: flex-start; }
+  .dayTitle { font-size: 1.25rem; }
+  .tableWrap { margin-inline: -0.35rem; }
+  .exerciseTable { min-width: 34rem; }
+}
