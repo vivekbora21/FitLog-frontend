@@ -2,12 +2,12 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Scale, Dumbbell, Flame, TrendingDown, TrendingUp, Target, ArrowRight, Ruler, Zap, ListChecks, Percent } from 'lucide-react';
+import { Scale, Dumbbell, Flame, TrendingDown, TrendingUp, Target, ArrowRight, Ruler, Zap, ListChecks, Percent, Activity } from 'lucide-react';
 import { MetricChart, DataPoint } from './MetricChart';
 import { Card } from './ui/Card';
 import styles from './DashboardCharts.module.css';
 
-type Tone = 'slate' | 'emerald' | 'cyan' | 'amber';
+type Tone = 'slate' | 'emerald' | 'cyan' | 'amber' | 'rose';
 
 function StatTile({
   icon: Icon,
@@ -64,16 +64,24 @@ export interface NutritionTrendPoint {
   protein_target: number;
 }
 
+export interface CaloriesBurnedTrendPoint {
+  date: string;
+  label: string;
+  calories_burned: number;
+}
+
 export interface DashboardTrends {
   weight?: WeightTrendPoint[];
   volume?: VolumeTrendPoint[];
   nutrition?: NutritionTrendPoint[];
+  calories_burned?: CaloriesBurnedTrendPoint[];
 }
 
 interface DashboardChartsProps {
   trends?: DashboardTrends;
   targetWeight?: number;
   dailyCaloriesTarget?: number;
+  weeklyCaloriesBurnedTarget?: number;
   programDuration?: number;
   modeLabel?: string;
 }
@@ -82,14 +90,16 @@ export function DashboardCharts({
   trends,
   targetWeight = 74.0,
   dailyCaloriesTarget,
+  weeklyCaloriesBurnedTarget,
   programDuration = 60,
   modeLabel = 'Goal',
 }: DashboardChartsProps) {
-  const [activeTab, setActiveTab] = useState<'weight' | 'volume' | 'nutrition'>('weight');
+  const [activeTab, setActiveTab] = useState<'weight' | 'volume' | 'nutrition' | 'burned'>('weight');
 
   const weightPoints = trends?.weight || [];
   const volumePoints = trends?.volume || [];
   const nutritionPoints = trends?.nutrition || [];
+  const caloriesBurnedPoints = trends?.calories_burned || [];
 
   // Weight metrics calculations
   const weightMetrics = useMemo(() => {
@@ -143,6 +153,24 @@ export function DashboardCharts({
     };
   }, [nutritionPoints, dailyCaloriesTarget]);
 
+  // Calories burned metrics calculations
+  const caloriesBurnedMetrics = useMemo(() => {
+    if (!caloriesBurnedPoints.length) return null;
+    const loggedDays = caloriesBurnedPoints.filter((p) => p.calories_burned > 0);
+    const totalBurned = caloriesBurnedPoints.reduce((acc, p) => acc + p.calories_burned, 0);
+    const avgBurned = loggedDays.length
+      ? Math.round(loggedDays.reduce((acc, p) => acc + p.calories_burned, 0) / loggedDays.length)
+      : 0;
+    const latest = caloriesBurnedPoints[caloriesBurnedPoints.length - 1];
+
+    return {
+      latest: latest.calories_burned,
+      avg: avgBurned,
+      total: Math.round(totalBurned),
+      daysLogged: loggedDays.length,
+    };
+  }, [caloriesBurnedPoints]);
+
   // Formatted chart series
   const weightChartData: DataPoint[] = useMemo(() => {
     return weightPoints.map((p) => ({
@@ -167,6 +195,13 @@ export function DashboardCharts({
       sublabel: p.protein ? `Protein: ${p.protein}g` : undefined,
     }));
   }, [nutritionPoints]);
+
+  const caloriesBurnedChartData: DataPoint[] = useMemo(() => {
+    return caloriesBurnedPoints.map((p) => ({
+      label: p.label,
+      value: p.calories_burned,
+    }));
+  }, [caloriesBurnedPoints]);
 
   return (
     <Card className={styles.card}>
@@ -205,6 +240,15 @@ export function DashboardCharts({
             <Flame size={14} />
             <span>Calorie Intake</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('burned')}
+            className={`${styles.tab} ${activeTab === 'burned' ? `${styles.tabActive} ${styles.rose}` : ''}`}
+          >
+            <Activity size={14} />
+            <span>Calories Burned</span>
+          </button>
         </div>
       </div>
 
@@ -240,6 +284,15 @@ export function DashboardCharts({
           <StatTile icon={Flame} tone="slate" label="Latest Intake" value={nutritionMetrics.latestCalories} unit="kcal" />
           <StatTile icon={Dumbbell} tone="emerald" label="Latest Protein" value={nutritionMetrics.latestProtein} unit="g" />
           <StatTile icon={Percent} tone="emerald" label="7-Day Avg" value={nutritionMetrics.avgCalories.toLocaleString()} unit="kcal" />
+        </div>
+      )}
+
+      {activeTab === 'burned' && caloriesBurnedMetrics && (
+        <div className={styles.summaryGrid}>
+          <StatTile icon={Flame} tone="rose" label="Latest Burn" value={caloriesBurnedMetrics.latest.toLocaleString()} unit="kcal" />
+          <StatTile icon={Activity} tone="slate" label="Daily Avg" value={caloriesBurnedMetrics.avg.toLocaleString()} unit="kcal" />
+          <StatTile icon={ListChecks} tone="emerald" label="Days Logged" value={caloriesBurnedMetrics.daysLogged} unit="/ 7" />
+          <StatTile icon={TrendingUp} tone="emerald" label="7-Day Total" value={caloriesBurnedMetrics.total.toLocaleString()} unit="kcal" trend="up" />
         </div>
       )}
 
@@ -312,6 +365,30 @@ export function DashboardCharts({
               <div className={styles.emptyStateText}>No nutrition logs recorded this week.</div>
               <Link href="/app/daily" className={`${styles.emptyStateLink} ${styles.amber}`}>
                 Log Today&apos;s Meals <ArrowRight size={14} />
+              </Link>
+            </div>
+          )
+        )}
+
+        {activeTab === 'burned' && (
+          caloriesBurnedChartData.length > 0 ? (
+            <MetricChart
+              data={caloriesBurnedChartData}
+              title="Calories Burned From Training"
+              subtitle="Estimated calories burned per day from logged workouts and cardio"
+              unit="kcal"
+              type="bar"
+              color="#E11D48"
+              height={220}
+              targetValue={weeklyCaloriesBurnedTarget ? Math.round(weeklyCaloriesBurnedTarget / 7) : undefined}
+              targetLabel="Daily Avg Target"
+              targetColor="#D97706"
+            />
+          ) : (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateText}>No workouts logged this week to estimate calorie burn.</div>
+              <Link href="/app/workouts/active" className={`${styles.emptyStateLink} ${styles.rose}`}>
+                Start Workout Session <ArrowRight size={14} />
               </Link>
             </div>
           )

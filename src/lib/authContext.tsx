@@ -22,6 +22,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Keeps the server's per-user timezone (used for every "today" boundary: plan day
+// numbering, nutrition date, exercise-calorie attribution) in sync with the browser's
+// actual timezone. Best-effort and silent — never blocks sign-in if it fails.
+function syncDeviceTimezone(userData: User) {
+  try {
+    const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (deviceTimezone && deviceTimezone !== userData.profile?.timezone) {
+      api.updateMe({ profile: { timezone: deviceTimezone } }).catch(() => {});
+    }
+  } catch {
+    // Never let timezone detection itself break sign-in.
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -30,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await api.login(email, password);
     const userData = await api.getMe();
     setUser(userData);
+    syncDeviceTimezone(userData);
     return userData;
   };
 
@@ -37,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await api.register(payload);
     const userData = await api.getMe();
     setUser(userData);
+    syncDeviceTimezone(userData);
     return userData;
   };
 
@@ -49,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userData = await api.getMe();
       setUser(userData);
+      syncDeviceTimezone(userData);
     } catch (err) {
       console.error('Failed to refresh user:', err);
     }
@@ -60,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const userData = await api.getMe();
           setUser(userData);
+          syncDeviceTimezone(userData);
         } catch (err) {
           api.logout();
         }

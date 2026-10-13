@@ -7,6 +7,7 @@ export interface UserProfile {
   activity_level?: 'SEDENTARY' | 'LIGHT' | 'MODERATE' | 'HIGH' | 'ATHLETE';
   fitness_goal: string;
   unit_preference: string;
+  timezone?: string;
   bio: string;
 }
 
@@ -520,6 +521,7 @@ export interface DashboardAdherence {
   protein: AdherenceMetricItem;
   water: AdherenceMetricItem;
   cardio: AdherenceMetricItem;
+  calories_burned?: AdherenceMetricItem;
   steps?: AdherenceMetricItem;
   sleep?: AdherenceMetricItem;
 }

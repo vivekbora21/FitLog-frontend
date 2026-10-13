@@ -35,6 +35,11 @@
   color: var(--color-amber);
 }
 
+.statIcon.rose {
+  background: var(--chip-rose);
+  color: var(--color-rose);
+}
+
 .statBody {
   min-width: 0;
 }
@@ -146,6 +151,10 @@
   color: var(--color-amber);
 }
 
+.tabActive.rose {
+  color: var(--color-rose);
+}
+
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -192,5 +201,10 @@
 
 .emptyStateLink.amber {
   background: var(--color-amber);
+  color: #FFFFFF;
+}
+
+.emptyStateLink.rose {
+  background: var(--color-rose);
   color: #FFFFFF;
 }

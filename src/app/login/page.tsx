@@ -177,7 +177,7 @@ export default function LoginPage() {
 
           <div className={styles.logo} onClick={() => router.push('/')} role="button" tabIndex={0}>
             <div className={styles.logoIcon}>
-              <Dumbbell size={22} color="#080B11" strokeWidth={2.5} />
+              <Dumbbell size={22} color="#FFFFFF" strokeWidth={2.5} />
             </div>
             <span>FIT<span className={styles.logoMark}>LOG</span></span>
           </div>

@@ -1,6 +1,9 @@
 .page {
-  display: grid;
-  gap: 1.35rem;
+  max-width: 1480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
 }
 
 .srOnly {
@@ -12,144 +15,567 @@
   white-space: nowrap;
 }
 
-.eyebrow {
-  color: var(--color-primary);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.actionSecondary {
-  padding: 0.7rem 0.9rem;
-  border: 1px solid var(--border-subtle);
+/* 1. Executive Welcome Header */
+.heroBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.2rem 1.4rem;
   background: var(--bg-surface);
-  font-weight: 800;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
 }
 
-.actionPrimary {
-  padding: 0.7rem 0.9rem;
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.heroBadges {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.dateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.streakBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.streakIcon {
+  color: #f59e0b;
+}
+
+.programPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.heroTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 850;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.heroSecondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.heroSecondaryBtn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-bright);
+}
+
+.heroPrimaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-md);
   background: var(--color-primary);
-  color: #052b20;
-  font-weight: 900;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(15, 118, 110, 0.2);
+  transition: all var(--transition-fast);
+}
+
+.heroPrimaryBtn:hover {
+  background: var(--color-primary-hover);
+}
+
+/* 2. Today's Command Center Grid */
+.todayGrid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 1.15rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .todayGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Workout Card */
+.workoutCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem 1.35rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.workoutCard:hover {
+  border-color: var(--border-bright);
+}
+
+.workoutHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.workoutEyebrow {
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.workoutStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.statusUpcoming {
+  background: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.25);
+}
+
+.statusCompleted {
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.statusRest {
+  background: var(--chip-slate);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.workoutName {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.3rem, 2vw, 1.65rem);
+  font-weight: 850;
+  color: var(--text-primary);
+  margin: 0.15rem 0 0.4rem;
+  letter-spacing: -0.02em;
+}
+
+.workoutMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 0.95rem;
+  flex-wrap: wrap;
+}
+
+.workoutMetaItem {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
 }
 
-/* Today: one focus sentence + a single row of today's facts */
-.todayCard {
-  padding: 1.2rem 1.25rem;
+.exercisePillsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.15rem;
 }
 
-.todayHeader {
+.exercisePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.74rem;
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.exercisePillMore {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--chip-slate);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.workoutFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.workoutLaunchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(15, 118, 110, 0.25);
+  transition: all var(--transition-fast);
+}
+
+.workoutLaunchBtn:hover {
+  background: var(--color-primary-hover);
+}
+
+.workoutRoutineLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.workoutRoutineLink:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-elevated);
+}
+
+/* Daily Fuel Matrix */
+.fuelCard {
+  padding: 1.25rem 1.35rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fuelHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.85rem;
 }
 
-.todayHeading {
-  flex: 1 1 28rem;
-  min-width: 0;
-}
-
-.focus {
-  margin: 0.35rem 0 0;
-  font-size: 1.35rem;
-  line-height: 1.3;
-  font-weight: 800;
-  max-width: 48ch;
-}
-
-.todayActions {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.facts {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1.75rem;
-  margin-top: 1rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.fact {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.factLabel {
-  color: var(--text-muted);
+.fuelEyebrow {
   font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 750;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.factValue {
-  color: var(--text-primary);
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.factNote {
-  color: var(--text-secondary);
+.fuelActionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.76rem;
-  text-transform: capitalize;
+  font-weight: 750;
+  color: var(--color-primary);
 }
 
-/* Trends (below the fold) */
+.fuelActionLink:hover {
+  text-decoration: underline;
+}
+
+.fuelTilesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  flex: 1;
+}
+
+.fuelTile {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.35rem;
+  transition: border-color var(--transition-fast);
+}
+
+.fuelTile:hover {
+  border-color: var(--border-bright);
+}
+
+.fuelTileTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fuelTileLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.fuelTileVal {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.fuelProgressTrack {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.fuelProgressFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.tileIcon {
+  color: var(--text-secondary);
+}
+
+.fuelSubtext {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.waterTileActionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.waterQuickAddBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.45rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.68rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.waterQuickAddBtn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-bright);
+}
+
+.weightQuickLogBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.45rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.68rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.weightQuickLogBtn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-bright);
+}
+
+/* Strategic Focus Strip */
+.focusStrip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.15rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.focusIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.focusBody {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.focusTag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+}
+
+.focusMessage {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* 3. Trends Section */
 .trends {
   display: grid;
-  gap: 1rem;
-  margin-top: 0.75rem;
+  gap: 1.15rem;
+  grid-template-columns: 1.25fr 0.75fr;
+  align-items: start;
 }
 
-.trendsHeading {
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+@media (max-width: 1024px) {
+  .trends {
+    grid-template-columns: 1fr;
+  }
 }
 
 .cardPad {
-  padding: 1.1rem;
+  padding: 1.15rem 1.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .sectionTitleRow {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.95rem;
 }
 
 .sectionTitleRow h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .sectionIcon {
-  color: var(--color-primary);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
 .anchorGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 0.65rem;
 }
 
 .anchorCard {
   padding: 0.85rem;
   background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .anchorCardHeader {
@@ -157,24 +583,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
 }
 
 .anchorName {
   color: var(--text-primary);
-  font-weight: 850;
+  font-size: 0.8rem;
+  font-weight: 750;
 }
 
 .anchorValue {
   color: var(--color-primary);
-  font-weight: 900;
-  font-size: 1.1rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 850;
+  font-size: 1.15rem;
 }
 
 .anchorNote {
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-  margin-top: 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .emptyState {
@@ -183,81 +610,63 @@
   align-items: center;
   text-align: center;
   gap: 0.35rem;
-  padding: 2rem 1.25rem;
+  padding: 1.85rem 1.25rem;
   border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
   background: var(--bg-surface-elevated);
+  grid-column: 1 / -1;
 }
 
 .emptyStateIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 0.35rem;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.25rem;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
 }
 
 .emptyStateTitle {
-  font-weight: 850;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
   color: var(--text-primary);
 }
 
 .emptyStateMessage {
   margin: 0;
-  max-width: 30ch;
+  max-width: 32ch;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .emptyStateAction {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.6rem;
-  padding: 0.5rem 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 900;
-  color: #052b20;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffffff;
   background: var(--color-primary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
 }
 
-/* Skeleton */
+.emptyStateAction:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Skeleton Loading */
 .skeletonHeaderCol {
-  display: grid;
-  gap: 0.5rem;
-}
-
-
-/* Dashboard overview refresh */
-.page { max-width: 1480px; margin: 0 auto; gap: 1.15rem; }
-.todayCard { background: linear-gradient(115deg, #082d30 0%, #0a4447 55%, #147f75 100%); border: 0; border-radius: 18px; color: #fff; padding: 1.5rem 1.65rem; box-shadow: 0 16px 30px rgba(8, 54, 58, .18); }
-.todayCard .eyebrow, .todayCard .focus { color: #fff; }
-.todayCard .eyebrow { opacity: .75; }
-.todayCard .focus { font-size: clamp(1.5rem, 2.2vw, 2.25rem); max-width: 24ch; }
-.todayCard .facts { border-top-color: rgba(255,255,255,.2); }
-.todayCard .factLabel { color: rgba(255,255,255,.64); }
-.todayCard .factValue, .todayCard .factNote { color: #fff; }
-.todayCard .actionSecondary { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.3); border-radius: 999px; }
-.todayCard .actionPrimary { background: #18c9ac; color: #052b20; border-radius: 999px; padding-inline: 1rem; }
-.trends { margin-top: .25rem; gap: .8rem; }
-.trendsHeading { color: var(--text-primary); font-size: 1.25rem; letter-spacing: -.02em; text-transform: none; }
-.cardPad { border-radius: 16px; box-shadow: var(--shadow-md); }
-.anchorCard { border-radius: 12px; }
-@media (min-width: 1050px) {
-  .page { grid-template-columns: minmax(0, 1.5fr) minmax(300px, .8fr); align-items: start; }
-  .page > :first-child, .page > .todayCard, .page > .trends { grid-column: 1 / -1; }
-  .page > .todayCard { margin-top: -.25rem; }
-  .page > .trends { display: grid; grid-template-columns: 1.2fr .8fr; align-items: start; }
-  .page > .trends > .trendsHeading { grid-column: 1 / -1; }
-}
-@media (max-width: 700px) {
-  .page { gap: .9rem; }
-  .todayCard { padding: 1.15rem; border-radius: 17px; }
-  .todayHeader { gap: .8rem; }
-  .todayActions { width: 100%; }
-  .todayActions a { flex: 1; justify-content: center; text-align: center; border-radius: 999px; }
-  .facts { gap: .8rem 1.05rem; }
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
 }

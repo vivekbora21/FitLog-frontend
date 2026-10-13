@@ -80,6 +80,13 @@ function ActiveWorkoutLoggerInner() {
   const [exercises, setExercises] = useState<ActiveExercise[]>([]);
   const [routineExercises, setRoutineExercises] = useState<RoutineExercisePayload[]>([]);
   const startTimeRef = useRef<number>(Date.now());
+  // Stable for the lifetime of this page so a retried "finish workout" submission
+  // (double-click, request timeout + retry) is recognized by the backend as the same
+  // attempt instead of creating a duplicate session. A lazy useState initializer (not
+  // useRef, which re-evaluates its argument every render) runs this exactly once.
+  const [idempotencyKey] = useState(
+    () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [finishModalOpen, setFinishModalOpen] = useState(false);
   const [overallRpe, setOverallRpe] = useState<number>(8);
@@ -281,6 +288,7 @@ function ActiveWorkoutLoggerInner() {
         notes: workoutNotes,
         routine: activeRoutineId,
         assigned_workout: assignedId || null,
+        idempotency_key: idempotencyKey,
         exercises: exercises.map((ex, orderIdx) => ({
           exercise: ex.exerciseId,
           order: orderIdx + 1,

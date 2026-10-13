@@ -45,6 +45,16 @@ class ApiClient {
   }
 
   logout() {
+    // Best-effort: revoke the refresh token server-side so it can't be replayed after
+    // sign-out. Fire-and-forget — local tokens are cleared regardless of the outcome,
+    // and callers of logout() don't await it today.
+    const refresh = typeof window !== 'undefined' ? localStorage.getItem('fitlog_refresh_token') : null;
+    if (refresh && this.token) {
+      this.request('/auth/logout/', {
+        method: 'POST',
+        body: JSON.stringify({ refresh }),
+      }).catch(() => {});
+    }
     this.setToken(null);
     this.setRefreshToken(null);
   }
@@ -132,6 +142,7 @@ class ApiClient {
       activity_level?: string;
       fitness_goal?: string;
       unit_preference?: string;
+      timezone?: string;
       bio?: string;
     };
   }) {
