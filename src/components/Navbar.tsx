@@ -2,10 +2,17 @@
 
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Plus, ChevronDown, Building2, LogOut, Menu, Dumbbell, PanelLeft, PanelLeftOpen, Settings } from 'lucide-react';
+import {
+  ChevronDown,
+  LogOut,
+  PanelLeft,
+  PanelLeftOpen,
+  User,
+  Calendar,
+  Bell,
+  LayoutDashboard,
+} from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
 import styles from './Navbar.module.css';
 
 interface NavbarProps {
@@ -33,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarCollap
     if (pathname.startsWith('/app/review')) return { title: 'Weekly Review', badge: 'Protocol' };
     if (pathname.startsWith('/app/guidelines')) return { title: 'Program Guidelines', badge: 'Guide' };
     if (pathname.startsWith('/app/expectations')) return { title: 'Milestones & Expectations', badge: 'Transformation' };
-    if (pathname.startsWith('/app/settings')) return { title: 'Settings', badge: 'Account' };
+    if (pathname.startsWith('/app/settings')) return { title: 'Profile', badge: 'Account' };
     if (pathname.startsWith('/app/trainer')) return { title: 'Trainer Hub', badge: 'Coach Portal' };
     if (pathname.startsWith('/app/gym')) return { title: 'Gym Admin', badge: 'Facility' };
     return { title: 'FitLog Pro', badge: 'App' };
@@ -46,14 +53,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarCollap
     router.push('/login');
   };
 
-  const userInitial = (user?.full_name || user?.email || 'U')[0].toUpperCase();
+  const userName = user?.first_name || (user?.full_name ? user.full_name.split(' ')[0] : (user?.username || 'Vivek'));
+  const userInitial = userName[0]?.toUpperCase() || 'V';
+
+  // Format date: Tue, Oct 14, 2026
+  const formattedDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
         {/* Left: Sidebar Toggle Button + Page Breadcrumb / Title */}
         <div className={styles.leftSection}>
-          {/* Mobile Drawer Toggle Button (desktop uses the border seam toggle button) */}
           <button
             onClick={onToggleSidebar}
             className={`sidebar-toggle-btn ${isSidebarCollapsed ? styles.toggleBtnCollapsed : styles.toggleBtnExpanded}`}
@@ -65,27 +80,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarCollap
 
           {/* Current Section Title & Badge */}
           <div className={styles.titleWrap}>
+            <LayoutDashboard size={18} className={styles.sectionIcon} />
             <h1 className={styles.pageTitle}>
               {section.title}
             </h1>
-            <Badge variant="emerald" size="sm">
+            <span className={styles.overviewBadge}>
               {section.badge}
-            </Badge>
+            </span>
           </div>
         </div>
 
-        {/* Right: Active Gym Indicator + Quick Action + User Menu */}
+        {/* Right: Date Picker + Notification Bell + User Profile */}
         <div className={styles.rightSection}>
-          {/* Active Gym Scope Tag - Desktop only */}
-          <div className={`gym-tag-desktop ${styles.gymTag}`}>
-            <Building2 size={13} color="var(--color-cyan)" />
-            <span className={styles.gymTagName}>Apex Performance</span>
+          {/* Date Selector Pill */}
+          <div className={styles.dateSelector}>
+            <Calendar size={14} className={styles.dateIcon} />
+            <span>{formattedDate}</span>
+            <ChevronDown size={14} className={styles.chevronIcon} />
           </div>
 
-          <Button size="sm" variant="primary" onClick={() => router.push('/app/workouts/active')}>
-            <Plus size={15} strokeWidth={2.5} />
-            <span className={styles.workoutBtnText}>Log Workout</span>
-          </Button>
+          {/* Notification Bell with red dot */}
+          <button className={styles.bellBtn} title="Notifications" aria-label="Notifications">
+            <Bell size={17} />
+            <span className={styles.notificationDot} />
+          </button>
 
           {/* User Menu Dropdown */}
           <div className={styles.dropdownWrap}>
@@ -99,19 +117,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarCollap
                 {userInitial}
               </div>
               <span className={styles.userNameLabel}>
-                {user?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}
+                {userName}
               </span>
-              <ChevronDown size={14} color="var(--text-muted)" />
+              <ChevronDown size={14} color="#64748B" />
             </button>
 
             {dropdownOpen && (
               <div className={styles.dropdownMenu}>
                 <div className={styles.dropdownHeader}>
                   <div className={styles.dropdownHeaderName}>
-                    {user?.full_name || 'FitLog Member'}
+                    {user?.full_name || 'Vivek'}
                   </div>
                   <div className={styles.dropdownHeaderEmail}>
-                    {user?.email}
+                    {user?.email || 'svivek431@gmail.com'}
                   </div>
                 </div>
 
@@ -122,8 +140,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarCollap
                   }}
                   className={styles.dropdownItem}
                 >
-                  <Settings size={14} />
-                  <span>Settings</span>
+                  <User size={14} />
+                  <span>Profile</span>
                 </button>
 
                 <button

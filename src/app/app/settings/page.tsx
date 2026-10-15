@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { UserCog, Dumbbell, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UserCog, Dumbbell, KeyRound, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { api } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
@@ -72,6 +72,9 @@ export default function SettingsPage() {
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState('');
   const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
 
+  const [exporting, setExporting] = useState(false);
+  const [exportErrorMsg, setExportErrorMsg] = useState('');
+
   useEffect(() => {
     if (!user) return;
     setFirstName(user.first_name || '');
@@ -116,7 +119,7 @@ export default function SettingsPage() {
         },
       });
       await refreshUser();
-      setSuccessMsg('Your settings have been saved.');
+      setSuccessMsg('Your profile settings have been saved.');
     } catch (err: any) {
       setErrorMsg(extractErrorMessage(err));
     } finally {
@@ -148,12 +151,46 @@ export default function SettingsPage() {
     }
   };
 
+  const handleExportData = async () => {
+    setExportErrorMsg('');
+    setExporting(true);
+    try {
+      const blob = await api.exportUserDataPdf();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fitlog-export-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setExportErrorMsg(extractErrorMessage(err));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
-      <header>
-        <div className={styles.eyebrow}>Account</div>
-        <h1 className={styles.title}>Settings</h1>
-        <p className={styles.subtitle}>Manage your profile details and fitness preferences.</p>
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.eyebrow}>Account & Preferences</div>
+          <h1 className={styles.title}>Settings</h1>
+          <p className={styles.subtitle}>Manage your profile details, fitness targets, and account security.</p>
+        </div>
+        <div className={styles.headerActions}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleExportData}
+            disabled={exporting}
+            className={styles.exportHeaderBtn}
+          >
+            <Download size={16} />
+            {exporting ? 'Preparing export...' : 'Export Data (PDF)'}
+          </Button>
+        </div>
       </header>
 
       {successMsg && (
@@ -168,265 +205,392 @@ export default function SettingsPage() {
           <span>{errorMsg}</span>
         </div>
       )}
+      {exportErrorMsg && (
+        <div className={`${styles.banner} ${styles.bannerError}`}>
+          <AlertCircle size={16} />
+          <span>{exportErrorMsg}</span>
+        </div>
+      )}
 
-      <div className={styles.formGrid}>
-        <form onSubmit={handleSubmit} className={styles.formCol}>
-          <Card className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardIcon}>
-                <UserCog size={17} />
+      {/* 1. Profile & Biometrics Section */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Profile & Biometrics</h2>
+          <p className={styles.sectionSubtitle}>
+            Personal information and physical attributes used to calibrate your workouts, targets, and plans.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className={styles.twoColGrid}>
+            {/* Card 1: Personal Information */}
+            <Card className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon}>
+                  <UserCog size={18} />
+                </div>
+                <div>
+                  <h3 className={styles.cardTitle}>Personal Information</h3>
+                  <p className={styles.cardSubtitle}>Your identity and bio as shown across FitLog.</p>
+                </div>
               </div>
-              <div>
-                <h2 className={styles.cardTitle}>Personal Information</h2>
-                <p className={styles.cardSubtitle}>Your name and avatar as shown across FitLog.</p>
+
+              <div className={styles.cardBody}>
+                <div className={styles.avatarRow}>
+                  <div className={styles.avatarPreview}>
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="Avatar preview"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      userInitials
+                    )}
+                  </div>
+                  <div className={`${uiStyles.inputGroup} ${uiStyles.inputGroupFlex} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="avatarUrl">Avatar URL</label>
+                    <input
+                      id="avatarUrl"
+                      type="url"
+                      className={uiStyles.input}
+                      placeholder="https://example.com/avatar.jpg"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.fieldRow}>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="firstName">First Name</label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      className={uiStyles.input}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      autoComplete="given-name"
+                    />
+                  </div>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="lastName">Last Name</label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      className={uiStyles.input}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      autoComplete="family-name"
+                    />
+                  </div>
+                </div>
+
+                <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                  <label className={uiStyles.label}>Email Address</label>
+                  <div className={styles.readOnlyValue}>
+                    <span className={styles.readOnlyEmail}>{user?.email || '—'}</span>
+                    <span className={styles.readOnlyBadge}>Primary / Locked</span>
+                  </div>
+                </div>
+
+                <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                  <label className={uiStyles.label} htmlFor="bio">Bio</label>
+                  <textarea
+                    id="bio"
+                    className={styles.textarea}
+                    placeholder="Tell us a bit about your training background and goals..."
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    maxLength={1000}
+                    rows={3}
+                  />
+                </div>
               </div>
+            </Card>
+
+            {/* Card 2: Fitness Profile */}
+            <Card className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon}>
+                  <Dumbbell size={18} />
+                </div>
+                <div>
+                  <h3 className={styles.cardTitle}>Fitness Profile</h3>
+                  <p className={styles.cardSubtitle}>Biometrics used to calculate your BMR, targets, and units.</p>
+                </div>
+              </div>
+
+              <div className={styles.cardBody}>
+                <div className={styles.fieldRow}>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="dateOfBirth">Date of Birth</label>
+                    <input
+                      id="dateOfBirth"
+                      type="date"
+                      className={uiStyles.input}
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                    />
+                  </div>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="unitPreference">Unit Preference</label>
+                    <select
+                      id="unitPreference"
+                      className={uiStyles.select}
+                      value={unitPreference}
+                      onChange={(e) => setUnitPreference(e.target.value)}
+                    >
+                      {UNIT_PREFERENCES.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.fieldRow}>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="heightCm">Height (cm)</label>
+                    <input
+                      id="heightCm"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      className={uiStyles.input}
+                      value={heightCm}
+                      onChange={(e) => setHeightCm(e.target.value)}
+                    />
+                  </div>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="weightKg">Weight (kg)</label>
+                    <input
+                      id="weightKg"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      className={uiStyles.input}
+                      value={weightKg}
+                      onChange={(e) => setWeightKg(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.fieldRow}>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="sex">Sex (for BMR)</label>
+                    <select id="sex" className={uiStyles.select} value={sex} onChange={(e) => setSex(e.target.value)}>
+                      {SEX_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                    <label className={uiStyles.label} htmlFor="activityLevel">Activity Level</label>
+                    <select id="activityLevel" className={uiStyles.select} value={activityLevel} onChange={(e) => setActivityLevel(e.target.value)}>
+                      {ACTIVITY_LEVELS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                  <label className={uiStyles.label} htmlFor="fitnessGoal">Primary Fitness Goal</label>
+                  <select
+                    id="fitnessGoal"
+                    className={uiStyles.select}
+                    value={fitnessGoal}
+                    onChange={(e) => setFitnessGoal(e.target.value)}
+                  >
+                    {FITNESS_GOALS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className={styles.formFooter}>
+            <div className={styles.formFooterMeta}>
+              <span>Biometric changes automatically calibrate your calorie burn and pacing targets.</span>
             </div>
-
-            <div className={styles.avatarRow}>
-              <div className={styles.avatarPreview}>
-                {avatarUrl ? <img src={avatarUrl} alt="Avatar preview" /> : userInitials}
-              </div>
-              <div className={`${uiStyles.inputGroup} ${uiStyles.inputGroupFlex}`}>
-                <label className={uiStyles.label} htmlFor="avatarUrl">Avatar URL</label>
-                <input
-                  id="avatarUrl"
-                  type="url"
-                  className={uiStyles.input}
-                  placeholder="https://example.com/avatar.jpg"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className={styles.fieldRow}>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="firstName">First Name</label>
-                <input
-                  id="firstName"
-                  type="text"
-                  className={uiStyles.input}
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                  autoComplete="given-name"
-                />
-              </div>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="lastName">Last Name</label>
-                <input
-                  id="lastName"
-                  type="text"
-                  className={uiStyles.input}
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                  autoComplete="family-name"
-                />
-              </div>
-            </div>
-
-            <div className={uiStyles.inputGroup}>
-              <label className={uiStyles.label}>Email</label>
-              <div className={styles.readOnlyValue}>{user?.email}</div>
-            </div>
-
-            <div className={uiStyles.inputGroup}>
-              <label className={uiStyles.label} htmlFor="bio">Bio</label>
-              <textarea
-                id="bio"
-                className={styles.textarea}
-                placeholder="Tell us a bit about your training background and goals..."
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                maxLength={1000}
-              />
-            </div>
-          </Card>
-
-          <Card className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardIcon}>
-                <Dumbbell size={17} />
-              </div>
-              <div>
-                <h2 className={styles.cardTitle}>Fitness Profile</h2>
-                <p className={styles.cardSubtitle}>Used to tailor your plans, targets, and units.</p>
-              </div>
-            </div>
-
-            <div className={styles.fieldRow}>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="dateOfBirth">Date of Birth</label>
-                <input
-                  id="dateOfBirth"
-                  type="date"
-                  className={uiStyles.input}
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                />
-              </div>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="unitPreference">Unit Preference</label>
-                <select
-                  id="unitPreference"
-                  className={uiStyles.select}
-                  value={unitPreference}
-                  onChange={(e) => setUnitPreference(e.target.value)}
-                >
-                  {UNIT_PREFERENCES.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.fieldRow}>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="heightCm">Height (cm)</label>
-                <input
-                  id="heightCm"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  className={uiStyles.input}
-                  value={heightCm}
-                  onChange={(e) => setHeightCm(e.target.value)}
-                />
-              </div>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="weightKg">Weight (kg)</label>
-                <input
-                  id="weightKg"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  className={uiStyles.input}
-                  value={weightKg}
-                  onChange={(e) => setWeightKg(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className={styles.fieldRow}>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="sex">Sex (for BMR)</label>
-                <select id="sex" className={uiStyles.select} value={sex} onChange={(e) => setSex(e.target.value)}>
-                  {SEX_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className={uiStyles.inputGroup}>
-                <label className={uiStyles.label} htmlFor="activityLevel">Activity Level</label>
-                <select id="activityLevel" className={uiStyles.select} value={activityLevel} onChange={(e) => setActivityLevel(e.target.value)}>
-                  {ACTIVITY_LEVELS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={uiStyles.inputGroup}>
-              <label className={uiStyles.label} htmlFor="fitnessGoal">Primary Fitness Goal</label>
-              <select
-                id="fitnessGoal"
-                className={uiStyles.select}
-                value={fitnessGoal}
-                onChange={(e) => setFitnessGoal(e.target.value)}
-              >
-                {FITNESS_GOALS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-          </Card>
-
-          <div className={styles.actions}>
             <Button type="submit" variant="primary" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving changes...' : 'Save Profile Changes'}
             </Button>
           </div>
         </form>
+      </section>
 
-        <form onSubmit={handlePasswordSubmit} className={styles.formCol}>
-          <Card className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardIcon}>
-                <KeyRound size={17} />
+      {/* 2. Calibration & Targets Section */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Daily & Weekly Targets</h2>
+          <p className={styles.sectionSubtitle}>
+            Custom thresholds for nutrition, hydration, recovery, and workout frequency.
+          </p>
+        </div>
+        <TargetsEditor />
+      </section>
+
+      {/* 3. Security & Data Management Section */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Security & Data</h2>
+          <p className={styles.sectionSubtitle}>
+            Manage your credentials and export your personal fitness records.
+          </p>
+        </div>
+
+        <div className={styles.twoColGrid}>
+          {/* Card 3: Change Password */}
+          <form onSubmit={handlePasswordSubmit}>
+            <Card className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon}>
+                  <KeyRound size={18} />
+                </div>
+                <div>
+                  <h3 className={styles.cardTitle}>Change Password</h3>
+                  <p className={styles.cardSubtitle}>Ensure your account is protected with a secure password.</p>
+                </div>
               </div>
-              <div>
-                <h2 className={styles.cardTitle}>Change Password</h2>
-                <p className={styles.cardSubtitle}>Use a strong password you don&apos;t use elsewhere.</p>
+
+              {passwordSuccessMsg && (
+                <div className={`${styles.banner} ${styles.bannerSuccess}`}>
+                  <CheckCircle2 size={16} />
+                  <span>{passwordSuccessMsg}</span>
+                </div>
+              )}
+              {passwordErrorMsg && (
+                <div className={`${styles.banner} ${styles.bannerError}`}>
+                  <AlertCircle size={16} />
+                  <span>{passwordErrorMsg}</span>
+                </div>
+              )}
+
+              <div className={styles.cardBody}>
+                <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                  <label className={uiStyles.label} htmlFor="oldPassword">Current Password</label>
+                  <input
+                    id="oldPassword"
+                    type="password"
+                    className={uiStyles.input}
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                  <label className={uiStyles.label} htmlFor="newPassword">New Password</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    className={uiStyles.input}
+                    placeholder="At least 8 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className={`${uiStyles.inputGroup} ${styles.inputGroupReset}`}>
+                  <label className={uiStyles.label} htmlFor="confirmNewPassword">Confirm New Password</label>
+                  <input
+                    id="confirmNewPassword"
+                    type="password"
+                    className={uiStyles.input}
+                    placeholder="Re-enter your new password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                  />
+                </div>
               </div>
-            </div>
 
-            {passwordSuccessMsg && (
-              <div className={`${styles.banner} ${styles.bannerSuccess}`}>
-                <CheckCircle2 size={16} />
-                <span>{passwordSuccessMsg}</span>
+              <div className={styles.cardFooter}>
+                <Button type="submit" variant="primary" disabled={changingPassword}>
+                  {changingPassword ? 'Updating...' : 'Update Password'}
+                </Button>
               </div>
-            )}
-            {passwordErrorMsg && (
-              <div className={`${styles.banner} ${styles.bannerError}`}>
-                <AlertCircle size={16} />
-                <span>{passwordErrorMsg}</span>
+            </Card>
+          </form>
+
+          {/* Card 4: Export Data */}
+          <div>
+            <Card className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon}>
+                  <Download size={18} />
+                </div>
+                <div>
+                  <h3 className={styles.cardTitle}>Export Data</h3>
+                  <p className={styles.cardSubtitle}>Download a complete archive of your logs & records.</p>
+                </div>
               </div>
-            )}
 
-            <div className={uiStyles.inputGroup}>
-              <label className={uiStyles.label} htmlFor="oldPassword">Current Password</label>
-              <input
-                id="oldPassword"
-                type="password"
-                className={uiStyles.input}
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
+              {exportErrorMsg && (
+                <div className={`${styles.banner} ${styles.bannerError}`}>
+                  <AlertCircle size={16} />
+                  <span>{exportErrorMsg}</span>
+                </div>
+              )}
 
-            <div className={uiStyles.inputGroup}>
-              <label className={uiStyles.label} htmlFor="newPassword">New Password</label>
-              <input
-                id="newPassword"
-                type="password"
-                className={uiStyles.input}
-                placeholder="At least 8 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-            </div>
+              <div className={styles.cardBody}>
+                <div className={styles.exportDetails}>
+                  <p className={styles.exportText}>
+                    Generate a publication-grade, self-service PDF report containing your complete history:
+                  </p>
+                  <ul className={styles.exportList}>
+                    <li className={styles.exportListItem}>
+                      <span className={styles.exportListBullet} />
+                      <span>Full profile configuration & biometric baseline</span>
+                    </li>
+                    <li className={styles.exportListItem}>
+                      <span className={styles.exportListBullet} />
+                      <span>Workout logs, sets, reps, and exercise history</span>
+                    </li>
+                    <li className={styles.exportListItem}>
+                      <span className={styles.exportListBullet} />
+                      <span>Daily nutrition records, calories & macro targets</span>
+                    </li>
+                    <li className={styles.exportListItem}>
+                      <span className={styles.exportListBullet} />
+                      <span>Body measurements, weight trends & milestone PRs</span>
+                    </li>
+                  </ul>
+                  <div className={styles.exportMeta}>
+                    <span className={styles.exportMetaBadge}>PDF Report</span>
+                    <span className={styles.exportMetaText}>Archival copy for your personal records</span>
+                  </div>
+                </div>
+              </div>
 
-            <div className={uiStyles.inputGroup}>
-              <label className={uiStyles.label} htmlFor="confirmNewPassword">Confirm New Password</label>
-              <input
-                id="confirmNewPassword"
-                type="password"
-                className={uiStyles.input}
-                placeholder="Re-enter your new password"
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-            </div>
-
-            <div className={styles.actions}>
-              <Button type="submit" variant="primary" disabled={changingPassword}>
-                {changingPassword ? 'Updating...' : 'Update Password'}
-              </Button>
-            </div>
-          </Card>
-        </form>
-      </div>
-
-      <TargetsEditor />
+              <div className={styles.cardFooter}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleExportData}
+                  disabled={exporting}
+                >
+                  <Download size={16} />
+                  {exporting ? 'Preparing export...' : 'Export My Data (PDF)'}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

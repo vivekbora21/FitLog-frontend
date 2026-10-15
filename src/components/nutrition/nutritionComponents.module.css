@@ -1,0 +1,1213 @@
+/* Shared CSS for Reusable Nutrition Components */
+
+/* --- 1. Macro Summary Cards --- */
+.macroCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.macroCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.macroCard:hover {
+  border-color: var(--border-bright);
+  box-shadow: var(--shadow-md);
+}
+
+.macroCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.macroCardIconTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.macroIconBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.macroIconCalories {
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea580c;
+}
+
+.macroIconProtein {
+  background: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+}
+
+.macroIconCarbs {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+
+.macroIconFat {
+  background: rgba(139, 92, 246, 0.14);
+  color: #7c3aed;
+}
+
+.macroCardLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.macroCardArrow {
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: transform var(--transition-fast);
+}
+
+.macroCard:hover .macroCardArrow {
+  transform: translateX(2px);
+  color: var(--text-primary);
+}
+
+.macroValuesRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.macroConsumed {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.macroTarget {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-family: 'Outfit', sans-serif;
+}
+
+.macroProgressWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.macroProgressBar {
+  flex: 1;
+  height: 7px;
+  background: #f1f5f9;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.macroProgressFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.fillCalories {
+  background: #0d9488;
+}
+
+.fillProtein {
+  background: #0d9488;
+}
+
+.fillCarbs {
+  background: #f59e0b;
+}
+
+.fillFat {
+  background: #8b5cf6;
+}
+
+.fillExcess {
+  background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 70%, #ec4899 100%);
+}
+
+.macroPercentage {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-secondary);
+  min-width: 38px;
+  text-align: right;
+}
+
+.macroPercentageExcess {
+  color: #e11d48;
+}
+
+.macroCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+}
+
+.macroRemainingText {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.macroExcessText {
+  color: #e11d48;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.macroBudgetPill {
+  font-size: 0.72rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+}
+
+/* --- 2. Macro Breakdown Card --- */
+.cardSection {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.cardHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.cardHeaderTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sectionHeaderIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.cardSubtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.dropdownSelect {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.dropdownSelect:hover, .dropdownSelect:focus {
+  border-color: var(--color-primary);
+}
+
+.macroBreakdownBody {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.donutAndLegendWrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.donutSvgWrap {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  flex-shrink: 0;
+}
+
+.donutSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.donutCenterText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.donutCalories {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.donutKcalLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.macroLegendList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  flex: 1;
+}
+
+.macroLegendItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+}
+
+.macroLegendLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legendDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotProtein {
+  background: #0d9488;
+}
+
+.dotCarbs {
+  background: #f59e0b;
+}
+
+.dotFat {
+  background: #8b5cf6;
+}
+
+.legendName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.legendGrams {
+  color: var(--text-secondary);
+  font-size: 0.775rem;
+}
+
+.legendKcal {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.vsTargetColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 1.25rem;
+}
+
+.vsTargetHeading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.vsTargetRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vsTargetRowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.8125rem;
+}
+
+.vsTargetLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vsTargetNums {
+  color: var(--text-secondary);
+  font-size: 0.775rem;
+}
+
+.vsTargetBarWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vsTargetBarTrack {
+  flex: 1;
+  height: 7px;
+  background: #f1f5f9;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.vsTargetBarFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.vsTargetPct {
+  font-size: 0.775rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-secondary);
+  min-width: 34px;
+  text-align: right;
+}
+
+/* --- 3. Hydration Card --- */
+.hydrationCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.hydrationMainRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 0.5rem;
+}
+
+.hydrationValueBig {
+  font-size: 1.875rem;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hydrationTargetValue {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.hydrationPctBadge {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-blue);
+  font-family: 'Outfit', sans-serif;
+}
+
+.hydrationProgressBar {
+  height: 8px;
+  background: #e0f2fe;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.hydrationProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8 0%, #2563eb 100%);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.hydrationTargetSub {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.hydrationButtons {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.waterQuickBtn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.waterQuickBtn:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0284c7;
+}
+
+/* --- 4. Target Calculation Card --- */
+.whereTargetCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  width: 100%;
+}
+
+.targetActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.editTargetsLink {
+  color: var(--color-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.35rem 0.625rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.editTargetsLink:hover {
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.useTargetBtn {
+  background: #0f766e;
+  color: #ffffff;
+  border: none;
+  padding: 0.4rem 0.875rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.useTargetBtn:hover:not(:disabled) {
+  background: #0d645d;
+}
+
+.useTargetBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.targetStepsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.875rem;
+  width: 100%;
+}
+
+.targetStepCard {
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all var(--transition-fast);
+}
+
+.targetStepSaved {
+  background: #f0fdf4;
+  border: 1.5px solid #a7f3d0;
+}
+
+.targetStepRecommended {
+  background: #f0fdfa;
+  border: 1.5px solid #99f6e4;
+}
+
+.targetStepCardLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.targetStepCardValue {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.targetStepCardSub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.targetStepBadge {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badgeSaved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badgeRec {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.targetNoteFooter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.625rem 0.875rem;
+}
+
+/* --- 5. Food Log Section --- */
+.foodLogCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  width: 100%;
+}
+
+.mealSectionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.mealSectionBox {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #ffffff;
+  transition: border-color var(--transition-fast);
+}
+
+.mealSectionBox:hover {
+  border-color: var(--border-bright);
+}
+
+.mealSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mealSectionHeaderOpen {
+  border-bottom-color: var(--border-subtle);
+}
+
+.mealSectionTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.mealSectionName {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+}
+
+.mealKcalBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.badgeActiveCalories {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badgeZeroCalories {
+  background: #f1f5f9;
+  color: var(--text-muted);
+}
+
+.mealSectionActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.addItemBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.addItemBtn:hover {
+  background: #ffffff;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.collapseToggleIcon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  transition: transform var(--transition-fast);
+}
+
+.collapseToggleIconOpen {
+  transform: rotate(180deg);
+}
+
+.mealItemsContainer {
+  padding: 0.625rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mealEmptyNotice {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0.25rem;
+  font-style: italic;
+}
+
+.mealRowItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.625rem;
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.mealRowItem:hover {
+  background: #f1f5f9;
+}
+
+.mealRowLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  flex: 1;
+}
+
+.mealDotBullet {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.mealRowTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mealRowTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mealRowServings {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.mealRowMacrosLine {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 0.625rem;
+}
+
+.macroP {
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.macroC {
+  font-weight: 600;
+  color: #d97706;
+}
+
+.macroF {
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.mealRowRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mealRowKcal {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+}
+
+.mealRowIconBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.mealRowIconBtn:hover {
+  color: var(--text-primary);
+  background: #e2e8f0;
+}
+
+.mealRowDeleteBtn:hover {
+  color: #e11d48;
+  background: #ffe4e6;
+}
+
+/* --- 6. Analytics Card --- */
+.analyticsCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  width: 100%;
+}
+
+.analyticsHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rangePillsGroup {
+  display: flex;
+  background: #f1f5f9;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  gap: 2px;
+}
+
+.rangePillBtn {
+  padding: 0.25rem 0.625rem;
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.rangePillBtnActive {
+  background: #ffffff;
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.metricTabsWrap {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.625rem;
+}
+
+.metricTabBtn {
+  padding: 0.35rem 0.875rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.metricTabBtn:hover {
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+.metricTabBtnActiveCalories {
+  background: rgba(15, 118, 110, 0.1);
+  border-color: #0f766e;
+  color: #0f766e;
+}
+
+.metricTabBtnActiveProtein {
+  background: rgba(13, 148, 136, 0.1);
+  border-color: #0d9488;
+  color: #0d9488;
+}
+
+.metricTabBtnActiveCarbs {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.metricTabBtnActiveFat {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: #8b5cf6;
+  color: #6d28d9;
+}
+
+.chartContainer {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+.chartSvg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: #f1f5f9;
+  stroke-width: 1;
+}
+
+.refLine {
+  stroke: #38bdf8;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.refLineLabel {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #0284c7;
+  font-family: 'Outfit', sans-serif;
+}
+
+.chartBar {
+  fill: #14b8a6;
+  cursor: pointer;
+  transition: fill 0.2s ease, transform 0.2s ease;
+}
+
+.chartBar:hover {
+  fill: #0f766e;
+}
+
+.chartBarProtein {
+  fill: #0d9488;
+}
+
+.chartBarCarbs {
+  fill: #f59e0b;
+}
+
+.chartBarFat {
+  fill: #8b5cf6;
+}
+
+.barValueLabel {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  fill: var(--text-primary);
+  text-anchor: middle;
+}
+
+.barDateLabel {
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--text-muted);
+  text-anchor: middle;
+}
+
+.yAxisLabel {
+  font-size: 9px;
+  fill: var(--text-muted);
+  text-anchor: end;
+}
+
+.summaryTableSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-top: 0.25rem;
+}
+
+.summaryTableTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+}
+
+.tableScrollWrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.macroSummaryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+.macroSummaryTable th {
+  background: #f8fafc;
+  padding: 0.5rem 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.macroSummaryTable td {
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.macroSummaryTable tr:last-child td {
+  border-bottom: none;
+}
+
+.macroSummaryTable tr:hover td {
+  background: #f8fafc;
+}
+
+.activeDayRow td {
+  background: #f0fdf4 !important;
+  font-weight: 600;
+}
+
+/* --- 7. Adjustment Protocol Card --- */
+.protocolCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.protocolTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.protocolTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+.protocolTable th {
+  background: #f8fafc;
+  padding: 0.625rem 1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.protocolTable td {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: var(--text-primary);
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.protocolTable tr:last-child td {
+  border-bottom: none;
+}
+
+.phaseCol {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.signalCol {
+  color: var(--text-secondary);
+}
+
+.interpCol {
+  color: var(--text-muted);
+}
+
+.actionCol {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* --- Responsive Breakpoints --- */
+@media (max-width: 1100px) {
+  .macroCardsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .targetStepsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .macroCardsGrid {
+    grid-template-columns: 1fr;
+  }
+  .targetStepsGrid {
+    grid-template-columns: 1fr;
+  }
+  .macroBreakdownBody {
+    grid-template-columns: 1fr;
+  }
+  .vsTargetColumn {
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    padding-left: 0;
+    padding-top: 1rem;
+  }
+  .cardHeaderRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

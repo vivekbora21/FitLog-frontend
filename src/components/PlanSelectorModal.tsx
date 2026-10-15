@@ -20,7 +20,8 @@ import {
   Gauge,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { Blueprint, JourneyMode, PlanRequest, PlanRoadmap } from '@/lib/types';
+import { useAuth } from '@/lib/authContext';
+import { Blueprint, JourneyMode, PlanRequest, PlanRoadmap, TrainingSplit } from '@/lib/types';
 import styles from './PlanSelectorModal.module.css';
 
 interface PlanSelectorModalProps {
@@ -64,6 +65,37 @@ const defaultWeekdaysFor = (count: number): number[] => {
   return WEEKDAYS.slice(0, n).map((w) => w.value);
 };
 
+/** Mirrors the backend's conservative first-goal guard for blueprint defaults. */
+const conservativeGoalWeight = (mode: JourneyMode, currentWeight: number, height: number, duration: number, pacing?: number) => {
+  if (currentWeight <= 0) return undefined;
+  const direction = mode === 'CUT' || mode === 'RECOMP' ? -1 : mode === 'BULK' ? 1 : 0;
+  if (direction === 0) return Math.round(currentWeight * 10) / 10;
+  const pace = Math.abs(pacing ?? (mode === 'BULK' ? 0.75 : 0.75));
+  const change = Math.min(pace * (duration / 7), currentWeight * 0.1);
+  const candidate = currentWeight + direction * change;
+  if (direction < 0 && height > 0) {
+    const bmiFloor = 18.5 * (height / 100) ** 2;
+    return Math.round(Math.max(candidate, bmiFloor) * 10) / 10;
+  }
+  return Math.round(candidate * 10) / 10;
+};
+
+/** Age in whole years from a stored `date_of_birth` (YYYY-MM-DD); undefined if absent/unparseable. */
+const ageFromDateOfBirth = (dateOfBirth?: string | null): number | undefined => {
+  if (!dateOfBirth) return undefined;
+  const dob = new Date(dateOfBirth);
+  if (Number.isNaN(dob.getTime())) return undefined;
+  const now = new Date();
+  let years = now.getFullYear() - dob.getFullYear();
+  const monthDiff = now.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) years--;
+  return years;
+};
+
+/** Backend only stores a date_of_birth, not a raw age, so a manually-entered age is
+ * backed into an approximate birth date (Jan 1 of the implied birth year) for storage. */
+const dateOfBirthFromAge = (ageYears: number): string => `${new Date().getFullYear() - ageYears}-01-01`;
+
 /** Pulls a human-readable message out of an ApiClient error (DRF-style {field: [msgs]} / {non_field_errors: [...]} / {detail}). */
 const extractApiError = (err: unknown, fallback: string): string => {
   const response = (err as { response?: unknown })?.response;
@@ -93,6 +125,8 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
   initialWeight = 77.0,
   dismissible = true,
 }) => {
+  const { user, refreshUser } = useAuth();
+
   const [step, setStep] = useState(0);
   const [path, setPath] = useState<'blueprint' | 'custom'>('blueprint');
   const [mode, setMode] = useState<JourneyMode>('CUT');
@@ -112,6 +146,9 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
   const [heightCm, setHeightCm] = useState<number>(175);
   const [age, setAge] = useState<number>(28);
   const [sex, setSex] = useState<'MALE' | 'FEMALE'>('MALE');
+  const [splitSlug, setSplitSlug] = useState<string | undefined>(undefined);
+  const [trainingSplits, setTrainingSplits] = useState<TrainingSplit[]>([]);
+  const [splitsLoading, setSplitsLoading] = useState(false);
 
   // Roadmap preview state
   const [roadmap, setRoadmap] = useState<PlanRoadmap | null>(null);
@@ -121,16 +158,28 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
   const [roadmapAttempt, setRoadmapAttempt] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
+  const [recommendingGoal, setRecommendingGoal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset the wizard to a fresh first step each time the modal is (re)opened.
+  // Reset the wizard to a fresh first step each time the modal is (re)opened, prefilling
+  // height/age/sex from the user's profile when it's already on file.
   useEffect(() => {
     if (isOpen) {
       setStep(0);
       setError(null);
       setRoadmap(null);
       setRoadmapError(null);
-      setCurrentWeight(initialWeight);
+      setSplitSlug(undefined);
+      const w = initialWeight || 77.0;
+      setCurrentWeight(w);
+      if (w > 0) {
+        const defaultDelta = -0.5 * (60 / 7);
+        setGoalWeight(Math.round((w + defaultDelta) * 10) / 10);
+      }
+      if (user?.profile?.height_cm != null) setHeightCm(user.profile.height_cm);
+      const profileAge = ageFromDateOfBirth(user?.profile?.date_of_birth);
+      if (profileAge != null) setAge(profileAge);
+      if (user?.profile?.sex === 'MALE' || user?.profile?.sex === 'FEMALE') setSex(user.profile.sex);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -181,9 +230,25 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
     };
   }, [isOpen, step, path, blueprints]);
 
+  useEffect(() => {
+    if (!isOpen || step !== 2) return;
+    let cancelled = false;
+    setSplitsLoading(true);
+    api.getTrainingSplits({ daysPerWeek, equipmentLevel: 'full_gym' })
+      .then((data) => {
+        if (!cancelled) {
+          setTrainingSplits(data.splits);
+          setSplitSlug((current) => data.splits.some((split) => split.slug === current) ? current : data.splits[0]?.slug);
+        }
+      })
+      .catch(() => { if (!cancelled) setTrainingSplits([]); })
+      .finally(() => { if (!cancelled) setSplitsLoading(false); });
+    return () => { cancelled = true; };
+  }, [isOpen, step, daysPerWeek]);
+
   const buildPlanRequest = (): PlanRequest => ({
     blueprint_slug: path === 'blueprint' ? selectedBlueprintSlug || undefined : undefined,
-    mode: path === 'custom' ? mode : undefined,
+    mode,
     duration_days: durationDays,
     days_per_week: daysPerWeek,
     weekdays,
@@ -192,6 +257,9 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
     height_cm: heightCm,
     age,
     sex,
+    split_slug: splitSlug,
+    equipment_level: 'full_gym',
+    experience: 'INTERMEDIATE',
   });
 
   // Fetch (or re-fetch, via roadmapAttempt) the roadmap preview when the preview step is reached.
@@ -222,10 +290,27 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, step, roadmapAttempt]);
 
+  const needsGoalWeight = mode === 'CUT' || mode === 'BULK';
+
   const goalDeltaTooLarge = useMemo(() => {
     if ((mode !== 'FOCUS' && mode !== 'HABIT') || goalWeight == null) return false;
     return Math.abs(goalWeight - currentWeight) > 2;
   }, [mode, goalWeight, currentWeight]);
+
+  const goalBelowHealthyBmi = useMemo(() => {
+    if (mode !== 'CUT' || goalWeight == null || heightCm <= 0) return false;
+    const minimumWeight = 18.5 * (heightCm / 100) ** 2;
+    return goalWeight < minimumWeight;
+  }, [mode, goalWeight, heightCm]);
+
+  const healthyWeightRange = useMemo(() => {
+    if (heightCm <= 0) return null;
+    const heightM = heightCm / 100;
+    return {
+      min: Math.round(18.5 * heightM ** 2 * 10) / 10,
+      max: Math.round(24.9 * heightM ** 2 * 10) / 10,
+    };
+  }, [heightCm]);
 
   const weekdayCountMismatch = weekdays.length !== daysPerWeek;
 
@@ -238,7 +323,9 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
     currentWeight > 0 &&
     heightCm > 0 &&
     age > 0 &&
-    !goalDeltaTooLarge;
+    !goalDeltaTooLarge &&
+    !goalBelowHealthyBmi &&
+    (!needsGoalWeight || goalWeight != null);
 
   if (!isOpen) return null;
 
@@ -249,8 +336,15 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
   const selectMode = (m: JourneyMode) => {
     setMode(m);
     setSelectedBlueprintSlug(null);
-    setDurationDays(MODE_CONFIG[m].defaultDays);
-    if ((m === 'FOCUS' || m === 'HABIT') && goalWeight != null) {
+    const days = MODE_CONFIG[m].defaultDays;
+    setDurationDays(days);
+    if (m === 'CUT' && currentWeight > 0) {
+      const delta = -0.5 * (days / 7);
+      setGoalWeight(Math.round((currentWeight + delta) * 10) / 10);
+    } else if (m === 'BULK' && currentWeight > 0) {
+      const delta = 0.25 * (days / 7);
+      setGoalWeight(Math.round((currentWeight + delta) * 10) / 10);
+    } else if (m === 'FOCUS' || m === 'HABIT') {
       setGoalWeight(currentWeight);
     }
   };
@@ -261,6 +355,13 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
     setDurationDays(bp.default_duration_days);
     setDaysPerWeek(bp.default_days_per_week);
     setWeekdays(defaultWeekdaysFor(bp.default_days_per_week));
+    setGoalWeight(conservativeGoalWeight(
+      bp.mode,
+      currentWeight,
+      heightCm,
+      bp.default_duration_days,
+      bp.pacing_kg_per_week,
+    ));
   };
 
   const goBack = () => {
@@ -284,6 +385,8 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
         setError(`Select exactly ${daysPerWeek} workout day${daysPerWeek === 1 ? '' : 's'} to match your chosen frequency.`);
       } else if (goalDeltaTooLarge) {
         setError('For Focus/Habit plans, goal weight must stay within 2kg of your current weight.');
+      } else if (needsGoalWeight && goalWeight == null) {
+        setError(`${MODE_CONFIG[mode].label} requires a goal weight.`);
       } else {
         setError('Please fill in your stats before continuing.');
       }
@@ -292,11 +395,32 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
     setStep(step + 1);
   };
 
+  // Best-effort: if the user's profile was missing height/age, persist what they entered
+  // here so future plans (and the rest of the app) don't need to ask again. Never blocks
+  // or fails plan creation.
+  const syncMissingProfileFields = async () => {
+    const missingHeight = user?.profile?.height_cm == null;
+    const missingDob = !user?.profile?.date_of_birth;
+    if (!missingHeight && !missingDob) return;
+    try {
+      await api.updateMe({
+        profile: {
+          ...(missingHeight ? { height_cm: heightCm } : {}),
+          ...(missingDob ? { date_of_birth: dateOfBirthFromAge(age) } : {}),
+        },
+      });
+      await refreshUser();
+    } catch {
+      // Profile sync is a convenience, not a requirement for starting the plan.
+    }
+  };
+
   const handleStart = async () => {
     setSubmitting(true);
     setError(null);
     try {
       await api.createPlan(buildPlanRequest());
+      await syncMissingProfileFields();
       onSuccess();
       onClose();
     } catch (err: unknown) {
@@ -307,7 +431,7 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
     }
   };
 
-  const daysPerWeekOptions = [3, 4, 5, 6];
+  const daysPerWeekOptions = [2, 3, 4, 5, 6];
   const durationPresets = [21, 30, 60, 90];
 
   return (
@@ -433,10 +557,10 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                           <div className={styles.bpName}>{bp.name}</div>
                           <div className={styles.bpDesc}>{bp.description}</div>
                         </div>
-                        <div className={styles.bpFooter}>
-                          {bp.default_days_per_week}x/week &middot; {bp.pacing_kg_per_week > 0 ? '+' : ''}
+                        {/* <div className={styles.bpFooter}>
+                          {bp.pacing_kg_per_week > 0 ? '+' : ''}
                           {bp.pacing_kg_per_week} kg/week
-                        </div>
+                        </div> */}
                       </div>
                     );
                   })}
@@ -508,6 +632,7 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                       onClick={() => {
                         setDaysPerWeek(d);
                         setWeekdays(defaultWeekdaysFor(d));
+                        setSplitSlug(undefined);
                       }}
                     >
                       {d}x/week
@@ -548,14 +673,41 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Goal Weight (kg, optional)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className={styles.input}
-                    value={goalWeight ?? ''}
-                    onChange={(e) => setGoalWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
-                  />
+                  <label className={styles.label}>Goal Weight (kg{needsGoalWeight ? '' : ', optional'})</label>
+                  <div className={styles.goalWeightRow}>
+                    <input
+                      type="number"
+                      step="0.1"
+                      className={styles.input}
+                      value={goalWeight ?? ''}
+                      onChange={(e) => setGoalWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    />
+                    <button
+                      type="button"
+                      className={styles.recommendBtn}
+                      title="Suggest a goal weight at a safe pace for this mode and duration"
+                      disabled={recommendingGoal}
+                      onClick={async () => {
+                        setRecommendingGoal(true);
+                        setError(null);
+                        try {
+                          const { goal_weight_kg } = await api.recommendGoalWeight({
+                            mode,
+                            current_weight_kg: currentWeight,
+                            height_cm: heightCm,
+                            duration_days: durationDays,
+                          });
+                          setGoalWeight(goal_weight_kg);
+                        } catch (err: unknown) {
+                          setError(extractApiError(err, 'Could not get a recommendation. Please try again.'));
+                        } finally {
+                          setRecommendingGoal(false);
+                        }
+                      }}
+                    >
+                      <Sparkles size={13} /> {recommendingGoal ? 'Thinking…' : 'Recommend'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -568,6 +720,9 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                     value={heightCm}
                     onChange={(e) => setHeightCm(parseFloat(e.target.value) || 0)}
                   />
+                  {user?.profile?.height_cm == null && (
+                    <small className={styles.inputHelpText}>Not on your profile yet — we&apos;ll save it there.</small>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>Age</label>
@@ -577,6 +732,9 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                     value={age}
                     onChange={(e) => setAge(parseInt(e.target.value) || 0)}
                   />
+                  {!user?.profile?.date_of_birth && (
+                    <small className={styles.inputHelpText}>Not on your profile yet — we&apos;ll save it there.</small>
+                  )}
                 </div>
               </div>
 
@@ -596,9 +754,62 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                 </div>
               </div>
 
+              {healthyWeightRange && (
+                <div className={styles.healthyRangeCard}>
+                  <div>
+                    <strong>Reference weight range</strong>
+                    <span>
+                      For {heightCm} cm, age {age}, and {sex === 'MALE' ? 'male' : 'female'} profile data, the standard adult BMI screening range (18.5–24.9) is approximately{' '}
+                      <strong>{healthyWeightRange.min}–{healthyWeightRange.max} kg</strong>.
+                    </span>
+                  </div>
+                  {(currentWeight < healthyWeightRange.min || currentWeight > healthyWeightRange.max) && (
+                    <div className={styles.warningText}>
+                      <AlertTriangle size={13} /> Current weight is outside this reference range.
+                    </div>
+                  )}
+                  {goalWeight != null && (goalWeight < healthyWeightRange.min || goalWeight > healthyWeightRange.max) && (
+                    <div className={styles.warningText}>
+                      <AlertTriangle size={13} /> Goal weight is outside this reference range.
+                    </div>
+                  )}
+                  <small>BMI is a screening estimate; it does not account for muscle mass or individual medical factors.</small>
+                </div>
+              )}
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Training style</label>
+                <small className={styles.inputHelpText}>Approved plans for your selected frequency. Your selection is previewed and validated server-side.</small>
+                {splitsLoading ? <div className={`skeleton ${styles.blueprintSkeleton}`} /> : null}
+                {!splitsLoading && trainingSplits.length === 0 ? (
+                  <div className={styles.warningText}>No approved plan is available for this setup yet. Try another training frequency.</div>
+                ) : null}
+                {!splitsLoading && trainingSplits.map((split) => (
+                  <button
+                    key={split.slug}
+                    type="button"
+                    className={`${styles.blueprintCard} ${splitSlug === split.slug ? styles.blueprintCardSelected : ''}`}
+                    onClick={() => setSplitSlug(split.slug)}
+                  >
+                    <div className={styles.bpHeader}>
+                      <span className={styles.bpName}>{split.name}</span>
+                      {splitSlug === split.slug && <CheckCircle2 size={16} color="#059669" />}
+                    </div>
+                    <div className={styles.bpDesc}>{split.description}</div>
+                    <div className={styles.bpFooter}>{split.estimated_session_minutes} min · {split.experience_levels.join(', ').toLowerCase()}</div>
+                  </button>
+                ))}
+              </div>
+
               {goalDeltaTooLarge && (
                 <div className={styles.warningText}>
                   <AlertTriangle size={13} /> Focus/Habit plans keep goal weight within 2kg of your current weight.
+                </div>
+              )}
+
+              {goalBelowHealthyBmi && (
+                <div className={styles.warningText}>
+                  <AlertTriangle size={13} /> This goal is below the standard healthy BMI floor for your height. Choose a higher target or speak with a clinician before proceeding.
                 </div>
               )}
 
@@ -653,6 +864,15 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                       <div className={styles.feasibilityMessage}>{roadmap.feasibility.message}</div>
                     </div>
                   </div>
+
+                  {(roadmap as any)?.engine?.can_start === false && (
+                    <div className={styles.errorNote}>
+                      <AlertCircle size={15} />{' '}
+                      {(roadmap as any)?.engine?.messages?.find((m: any) => m.severity === 'block')?.params?.detail ||
+                        (roadmap as any)?.engine?.messages?.find((m: any) => m.severity === 'block')?.code ||
+                        'Cannot start plan with the selected inputs. Please adjust your details.'}
+                    </div>
+                  )}
 
                   {roadmap.warnings.length > 0 && (
                     <div className={styles.warningsList}>
@@ -799,7 +1019,7 @@ export const PlanSelectorModal: React.FC<PlanSelectorModalProps> = ({
                 <button
                   className={styles.submitBtn}
                   onClick={handleStart}
-                  disabled={submitting || roadmapLoading || !roadmap}
+                  disabled={submitting || roadmapLoading || !roadmap || (roadmap as any)?.engine?.can_start === false}
                 >
                   <Play size={15} /> {submitting ? 'Starting Plan...' : 'Start This Plan'}
                 </button>

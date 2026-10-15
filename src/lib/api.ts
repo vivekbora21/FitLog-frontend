@@ -1,5 +1,5 @@
 import { validateApiPayload, type DateRangeParams } from '@fitlog/shared';
-import type { Blueprint, CreatePlanResponse, Food, JourneyDetail, MacroTarget, PlanRequest, PlanRoadmap, RecommendedTargets, RecentFood, NutritionDayResponse, TargetField, TargetsPayload, WeightEntry, BodyMeasurement } from './types';
+import type { Blueprint, TrainingSplit, CreatePlanResponse, Food, JourneyDetail, JourneyMode, MacroTarget, PlanRequest, PlanRoadmap, RecommendedTargets, RecentFood, NutritionDayResponse, NutritionHistoryResponse, TargetField, TargetsPayload, WeightEntry, BodyMeasurement, PrTrendPoint } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -159,6 +159,23 @@ class ApiClient {
     });
   }
 
+  // Returns the raw PDF bytes of the user's data export. Bypasses request(),
+  // which always parses JSON.
+  async exportUserDataPdf(): Promise<Blob> {
+    const url = `${API_BASE_URL}/auth/export-data/`;
+    const res = await fetch(url, {
+      headers: {
+        Accept: 'application/pdf',
+        'X-API-Version': '1',
+        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`API Error: ${res.status} ${res.statusText}`);
+    }
+    return res.blob();
+  }
+
   // Gyms & Memberships
   async getGyms() {
     return this.request<any>('/gyms/');
@@ -277,6 +294,10 @@ class ApiClient {
     return this.request<NutritionDayResponse>(`/nutrition/${dateStr}/`);
   }
 
+  async getNutritionHistory(days: number = 30) {
+    return this.request<NutritionHistoryResponse>(`/nutrition/history/?days=${days}`);
+  }
+
   // Pass `food` + `servings` or `quantity` to have the server compute macros; otherwise send them explicitly.
   async addMeal(mealData: { meal_type: string; name?: string; food?: string; servings?: number; quantity?: number; calories?: number; protein_g?: number; carbs_g?: number; fat_g?: number; date?: string }) {
     return this.request<any>('/nutrition/meals/', {
@@ -288,6 +309,13 @@ class ApiClient {
   async deleteMeal(mealId: string) {
     return this.request<any>(`/nutrition/meals/${mealId}/`, {
       method: 'DELETE',
+    });
+  }
+
+  async updateMeal(mealId: string, mealData: { name?: string; servings?: number; quantity?: number; calories?: number; protein_g?: number; carbs_g?: number; fat_g?: number }) {
+    return this.request<any>(`/nutrition/meals/${mealId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(mealData),
     });
   }
 
@@ -359,6 +387,16 @@ class ApiClient {
     return this.request<BodyMeasurement[] | { results: BodyMeasurement[] }>(`/progress/measurements/${params.toString() ? `?${params}` : ''}`);
   }
 
+  async getMeasurementSummary(clientId?: string) {
+    const params = new URLSearchParams(clientId ? { client_id: clientId } : {});
+    return this.request<any>(`/progress/measurements/summary/${params.toString() ? `?${params}` : ''}`);
+  }
+
+  async compareMeasurements(dateA: string, dateB: string) {
+    const params = new URLSearchParams({ date_a: dateA, date_b: dateB });
+    return this.request<any>(`/progress/measurements/compare/?${params.toString()}`);
+  }
+
   async logMeasurement(data: Record<string, any>) {
     return this.request<any>('/progress/measurements/', {
       method: 'POST',
@@ -382,6 +420,11 @@ class ApiClient {
   async getPersonalRecords(clientId?: string) {
     const query = clientId ? `?client_id=${clientId}` : '';
     return this.request<any>(`/progress/prs/${query}`);
+  }
+
+  async getPersonalRecordTrend(exerciseId: string, clientId?: string) {
+    const params = new URLSearchParams({ exercise_id: exerciseId, ...(clientId ? { client_id: clientId } : {}) });
+    return this.request<{ exercise_id: string; trend: PrTrendPoint[] }>(`/progress/pr-trend/?${params}`);
   }
 
   // Daily Lifestyle, Steps & Sleep Log
@@ -474,6 +517,13 @@ class ApiClient {
     return this.request<{ blueprints: Blueprint[] }>('/plans/blueprints/');
   }
 
+  async getTrainingSplits(params?: { daysPerWeek?: number; equipmentLevel?: string }) {
+    const query = new URLSearchParams();
+    if (params?.daysPerWeek) query.set('days_per_week', String(params.daysPerWeek));
+    if (params?.equipmentLevel) query.set('equipment_level', params.equipmentLevel);
+    return this.request<{ splits: TrainingSplit[] }>(`/plans/splits/${query.toString() ? `?${query}` : ''}`);
+  }
+
   async previewPlan(payload: PlanRequest) {
     return this.request<PlanRoadmap>('/plans/preview/', {
       method: 'POST',
@@ -483,6 +533,13 @@ class ApiClient {
 
   async createPlan(payload: PlanRequest) {
     return this.request<CreatePlanResponse>('/plans/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async recommendGoalWeight(payload: { mode: JourneyMode; current_weight_kg: number; height_cm: number; duration_days: number }) {
+    return this.request<{ goal_weight_kg: number }>('/plans/recommended-goal-weight/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

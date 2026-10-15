@@ -814,6 +814,28 @@ export interface Blueprint {
   updated_at: string;
 }
 
+export interface TrainingSplit {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  days_per_week: number;
+  workout_templates: Record<string, BlueprintWorkoutExercise[]>;
+  is_active: boolean;
+  display_order: number;
+  experience_levels: PlanDifficulty[];
+  compatible_goals: JourneyMode[];
+  rest_days: number[];
+  muscle_groups: string[];
+  equipment_requirements: string[];
+  estimated_session_minutes: number;
+  weekly_volume: Record<string, unknown>;
+  progression_strategy: string;
+  recovery_rules: string[];
+  approval_status: 'DRAFT' | 'APPROVED' | 'INACTIVE';
+  catalog_version: string;
+}
+
 export interface PlanPreviewPayload {
   blueprint_slug?: string;
   mode?: JourneyMode;
@@ -825,6 +847,10 @@ export interface PlanPreviewPayload {
   height_cm: number;
   age: number;
   sex: 'MALE' | 'FEMALE';
+  split_slug?: string;
+  equipment_level?: 'full_gym' | 'home_basic' | 'minimal';
+  experience?: PlanDifficulty;
+  activity_level?: string;
 }
 
 export interface CreatePlanPayload extends PlanPreviewPayload {

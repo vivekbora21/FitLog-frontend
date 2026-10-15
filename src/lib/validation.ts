@@ -120,6 +120,19 @@ export interface ParsedApiErrors {
   fieldErrors: Record<string, string>;
 }
 
+/** Reduce a DRF-style error value (string, ErrorDetail-ish object, or
+ * arbitrarily nested array/object of them) to a single display string. */
+function flattenError(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? flattenError(value[0]) : '';
+  }
+  if (value && typeof value === 'object') {
+    const values = Object.values(value as Record<string, unknown>);
+    return values.length > 0 ? flattenError(values[0]) : '';
+  }
+  return value == null ? '' : String(value);
+}
+
 export function parseBackendError(err: any): ParsedApiErrors {
   const response = err?.response;
   if (!response) {
@@ -137,22 +150,16 @@ export function parseBackendError(err: any): ParsedApiErrors {
   }
 
   if (response.detail) {
-    generalMessage = String(response.detail);
+    generalMessage = flattenError(response.detail);
   }
 
   if (response.non_field_errors) {
-    const nfe = Array.isArray(response.non_field_errors) ? response.non_field_errors[0] : response.non_field_errors;
-    generalMessage = String(nfe);
+    generalMessage = flattenError(response.non_field_errors);
   }
 
   for (const [key, val] of Object.entries(response)) {
     if (key === 'detail' || key === 'non_field_errors') continue;
-    let message = '';
-    if (Array.isArray(val) && val.length > 0) {
-      message = String(val[0]);
-    } else if (typeof val === 'string') {
-      message = val;
-    }
+    const message = flattenError(val);
     if (message) {
       fieldErrors[key] = message;
     }

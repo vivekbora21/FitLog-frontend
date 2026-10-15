@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   PlayCircle,
+  Clock,
   CalendarDays,
   ClipboardList,
   TrendingUp,
@@ -21,7 +22,7 @@ import {
   Dumbbell,
   Plus,
   LogOut,
-  Settings,
+  User,
   X,
   ChevronLeft,
   ChevronRight,
@@ -74,32 +75,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, o
   }, []);
 
   const hasProgram = Boolean(journey?.has_program);
-  const planBadge = hasProgram ? `Day ${journey?.current_day}/${journey?.duration_days}` : undefined;
-  const planBadgeVariant: NavItem['badgeVariant'] = journey?.is_calibrating
-    ? 'cyan'
-    : journey?.pacing_status === 'PACING_ALERT'
-      ? 'amber'
-      : journey?.pacing_status === 'OFF_TRACK'
-        ? 'rose'
-        : 'emerald';
-
-  const gatedBadge = !hasProgram && journey !== null ? 'Locked' : undefined;
-  const gatedVariant: NavItem['badgeVariant'] = 'amber';
+  const planBadge = journey?.has_program && journey?.current_day && journey?.duration_days
+    ? `DAY ${journey.current_day}/${journey.duration_days}`
+    : undefined;
 
   const mainNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/app', icon: LayoutDashboard },
-    { label: 'Today', href: '/app/workouts/active', icon: PlayCircle, badge: gatedBadge, badgeVariant: gatedVariant, isGated: true },
-    { label: 'Plan', href: '/app/workouts/plan', icon: CalendarDays, badge: planBadge || gatedBadge, badgeVariant: planBadgeVariant || gatedVariant, isGated: true },
-    { label: 'Plan History', href: '/app/workouts/plan/history', icon: History, badge: gatedBadge, badgeVariant: gatedVariant, isGated: true },
+    { label: 'Today', href: '/app/workouts/active', icon: Clock },
+    { label: 'Plan', href: '/app/workouts/plan', icon: CalendarDays, badge: planBadge, badgeVariant: 'cyan' },
+    { label: 'Plan History', href: '/app/workouts/plan/history', icon: History },
     { label: 'Routines', href: '/app/workouts/routines', icon: ListOrdered },
     { label: 'Exercise Library', href: '/app/exercises', icon: Dumbbell },
-    { label: 'Daily Log', href: '/app/daily', icon: ClipboardList, badge: gatedBadge, badgeVariant: gatedVariant, isGated: true },
-    { label: 'Measurements', href: '/app/measurements', icon: Ruler, badge: gatedBadge, badgeVariant: gatedVariant, isGated: true },
-    { label: 'Nutrition', href: '/app/nutrition', icon: Utensils, badge: gatedBadge, badgeVariant: gatedVariant, isGated: true },
-    { label: 'Review', href: '/app/review', icon: Award, badge: gatedBadge, badgeVariant: gatedVariant, isGated: true },
+    { label: 'Daily Log', href: '/app/daily', icon: ClipboardList },
+    { label: 'Measurements', href: '/app/measurements', icon: Ruler },
+    { label: 'Nutrition', href: '/app/nutrition', icon: Utensils },
+    { label: 'Review', href: '/app/review', icon: Award },
     { label: 'Guidelines', href: '/app/guidelines', icon: BookOpen },
-    { label: 'Milestones', href: '/app/expectations', icon: Target, badge: gatedBadge, badgeVariant: gatedVariant, isGated: true },
-    { label: 'Settings', href: '/app/settings', icon: Settings },
+    { label: 'Milestones', href: '/app/expectations', icon: Target },
+    { label: 'Profile', href: '/app/settings', icon: User },
   ];
 
   const managementNavItems: NavItem[] = [
@@ -171,14 +164,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, o
                 className={styles.brandLink}
               >
                 <div className={styles.brandIcon}>
-                  <Dumbbell size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m6.5 6.5 11 11" />
+                    <path d="m21 21-1-1" />
+                    <path d="m3 3 1 1" />
+                    <path d="m18 22 4-4" />
+                    <path d="m2 6 4-4" />
+                    <path d="m3 10 7-7" />
+                    <path d="m14 21 7-7" />
+                  </svg>
                 </div>
-                <span>
-                  FIT<span className={styles.brandHighlight}>LOG</span>
-                </span>
-                <Badge variant="emerald" size="sm">
-                  PRO
-                </Badge>
+                <span className={styles.brandTitle}>FITLOG</span>
+                <span className={styles.proBadge}>PRO</span>
               </Link>
 
               {/* Mobile close button (visible only in mobile drawer) */}
@@ -321,66 +318,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, o
               <Plus size={18} strokeWidth={2.5} />
             </button>
           ) : (
-            <Button
-              size="sm"
-              variant="primary"
-              fullWidth
+            <button
               onClick={() => {
                 onClose();
                 router.push('/app/workouts/active');
               }}
+              className={styles.logWorkoutBtn}
             >
               <Plus size={16} strokeWidth={2.5} />
               <span>Log Workout</span>
-            </Button>
-          )}
-        </div>
-
-        {/* User Profile Footer */}
-        <div className={`${styles.userFooter} ${isCollapsed ? styles.userFooterCollapsed : ''}`}>
-          {isCollapsed ? (
-            <>
-              <div
-                title={`${user?.full_name || 'FitLog User'} (${user?.email})`}
-                className={`${styles.userAvatar} ${styles.userAvatarCollapsed}`}
-              >
-                {userInitials}
-              </div>
-
-              <button
-                onClick={handleLogout}
-                title="Log Out"
-                className={`${styles.logoutBtn} ${styles.logoutBtnCollapsed}`}
-                aria-label="Log Out"
-              >
-                <LogOut size={16} />
-              </button>
-            </>
-          ) : (
-            <>
-              <div className={styles.userMeta}>
-                <div className={styles.userAvatar}>
-                  {userInitials}
-                </div>
-                <div className={styles.userTextWrap}>
-                  <div className={styles.userName}>
-                    {user?.full_name || 'FitLog User'}
-                  </div>
-                  <div className={styles.userEmail}>
-                    {user?.email}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                title="Log out"
-                className={styles.logoutBtn}
-                aria-label="Log Out"
-              >
-                <LogOut size={16} />
-              </button>
-            </>
+            </button>
           )}
         </div>
       </aside>

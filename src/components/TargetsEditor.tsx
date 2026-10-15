@@ -65,7 +65,11 @@ const toChanges = (draft: Draft) => {
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString());
 
-export const TargetsEditor: React.FC = () => {
+interface TargetsEditorProps {
+  onSaved?: () => void;
+}
+
+export const TargetsEditor: React.FC<TargetsEditorProps> = ({ onSaved }) => {
   const [saved, setSaved] = useState<TargetsPayload | null>(null);
   const [preview, setPreview] = useState<TargetsPayload | null>(null);
   const [draft, setDraft] = useState<Draft>({});
@@ -113,6 +117,7 @@ export const TargetsEditor: React.FC = () => {
       setPreview(null);
       setDraft({});
       setSuccessMsg('Saved. New targets apply from today; past days keep the targets they had.');
+      onSaved?.();
     } catch (err) {
       setErrors((err as { response?: { errors?: typeof errors } })?.response?.errors || {});
     } finally {

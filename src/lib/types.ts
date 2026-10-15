@@ -259,10 +259,74 @@ export interface NutritionDay {
   total_fat: number;
 }
 
+export interface MacroSummaryItem {
+  consumed: number;
+  target: number;
+  remaining?: number;
+  excess?: number;
+  percentage?: number;
+  is_exceeded?: boolean;
+  calories?: number;
+  pct_of_calories?: number;
+}
+
+export interface MacroSummaryCalculated {
+  calories: MacroSummaryItem;
+  protein: MacroSummaryItem;
+  carbs: MacroSummaryItem;
+  fat: MacroSummaryItem;
+  hydration?: {
+    consumed_ml: number;
+    target_ml: number;
+    consumed_l: number;
+    target_l: number;
+    remaining_ml: number;
+    remaining_l: number;
+    percentage: number;
+  };
+  calorie_budget_intact?: boolean;
+}
+
 export interface NutritionDayResponse {
   day: NutritionDay;
   targets: MacroTarget;
+  macro_summary?: MacroSummaryCalculated;
+  macro_breakdown?: any;
+  target_derivation?: any;
   yesterday_meals?: MealEntry[];
+  plan?: {
+    mode: string;
+    mode_label: string;
+    target_type: string;
+    program_name?: string | null;
+  };
+}
+
+export interface NutritionHistoryDay {
+  date: string;
+  program_day_number: number | null;
+  total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fat: number;
+  water_consumed_ml: number;
+  meal_count: number;
+  meals: MealEntry[];
+  has_logged: boolean;
+  target_calories: number;
+  target_protein: number;
+  target_carbs: number;
+  target_fat: number;
+  target_water: number;
+  target_type: string;
+  mode: string;
+}
+
+export interface NutritionHistoryResponse {
+  history: NutritionHistoryDay[];
+  weeks: any[];
+  targets: MacroTarget;
+  program: any;
 }
 
 export interface MacroTarget {
@@ -336,6 +400,12 @@ export interface PersonalRecord {
   reps: number;
   estimated_one_rep_max: number;
   achieved_at: string;
+}
+
+export interface PrTrendPoint {
+  date: string;
+  estimated_one_rep_max: number;
+  weight_kg: number;
 }
 
 export interface Gym {
@@ -456,6 +526,7 @@ export interface DashboardStats {
     cardio_minutes?: number;
     cardio_target?: number;
     weekly_workouts_target?: number;
+    target_waist?: number | null;
     program_day?: number | null;
     program_length?: number;
     program_completion_percent?: number;
@@ -472,6 +543,22 @@ export interface DashboardStats {
   weekly_health?: WeeklyHealth;
   journey_pacing?: JourneyPacingData;
   adherence?: DashboardAdherence;
+  trends?: {
+    weight?: Array<{
+      date: string;
+      label?: string;
+      weight_kg?: number;
+      waist_cm?: number | null;
+    }>;
+    volume?: Array<{
+      date: string;
+      label?: string;
+      title?: string;
+      volume_kg?: number;
+    }>;
+    nutrition?: any[];
+    calories_burned?: any[];
+  };
 }
 
 export type WeeklyHealthStatus = 'good' | 'warn' | 'bad' | 'pending';
@@ -574,6 +661,28 @@ export interface Blueprint {
   updated_at: string;
 }
 
+export interface TrainingSplit {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  days_per_week: number;
+  workout_templates: Record<string, BlueprintWorkoutExercise[]>;
+  is_active: boolean;
+  display_order: number;
+  experience_levels: ('BEGINNER' | 'INTERMEDIATE' | 'ADVANCED')[];
+  compatible_goals: JourneyMode[];
+  rest_days: number[];
+  muscle_groups: string[];
+  equipment_requirements: string[];
+  estimated_session_minutes: number;
+  weekly_volume: Record<string, unknown>;
+  progression_strategy: string;
+  recovery_rules: string[];
+  approval_status: 'DRAFT' | 'APPROVED' | 'INACTIVE';
+  catalog_version: string;
+}
+
 export interface PlanRequest {
   blueprint_slug?: string;
   mode?: JourneyMode;
@@ -585,6 +694,10 @@ export interface PlanRequest {
   height_cm: number;
   age: number;
   sex: 'MALE' | 'FEMALE';
+  split_slug?: string;
+  equipment_level?: 'full_gym' | 'home_basic' | 'minimal';
+  experience?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  activity_level?: string;
   name?: string;
 }
 
@@ -870,6 +983,33 @@ export interface JourneySummary {
   start_weight_kg?: number | null;
   current_weight_kg?: number | null;
   weight_change_kg?: number | null;
+  fat_burned_kg?: number | null;
+  consistency_pct?: number | null;
+  completion_rate_pct?: number | null;
+  nutrition_status?: {
+    consumed_calories: number;
+    target_calories: number;
+    percentage: number;
+    meals_logged: number;
+    label: string;
+    is_on_track: boolean;
+  } | null;
+  weekly_frequency?: Array<{
+    label: string;
+    workout_count: number;
+    volume_kg: number;
+    sets_count: number;
+    duration_minutes: number;
+  }>;
+  exercise_stats?: Array<{
+    exercise: string;
+    category: string;
+    best_weight_kg: number;
+    best_reps: number;
+    total_volume_kg: number;
+    estimated_1rm: number;
+    best_date: string;
+  }>;
   start_waist_cm?: number | null;
   current_waist_cm?: number | null;
   waist_change_cm?: number | null;

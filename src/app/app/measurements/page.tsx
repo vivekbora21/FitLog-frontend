@@ -1,352 +1,398 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import {
-  Ruler,
-  Plus,
-  TrendingDown,
-  TrendingUp,
-  Sparkles,
-  ArrowRight,
-  ArrowLeftRight,
-  Calendar,
-  Layers,
-  Activity,
-  Edit2,
-  Trash2,
-  CheckCircle2,
-  HelpCircle,
-  Percent,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { Ruler, Scale, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
-import { BodyMeasurement } from '@/lib/types';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { BodyMeasurement, WeightEntry } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
-import { MetricChart } from '@/components/MetricChart';
+import { Button } from '@/components/ui/Button';
+import { TrendChartCard, TrendAnalysis, MetricTabOption } from '@/components/common/TrendChartCard';
+import {
+  MeasurementsKpiGrid,
+  OverviewGrid,
+  OverviewItem,
+  SymmetryCard,
+  SymmetryItem,
+  CheckpointComparisonCard,
+  CheckpointRow,
+  HistoryLogCard,
+  MeasurementModal,
+} from '@/components/measurements';
 import styles from './measurements.module.css';
-function localDateKey(date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function parseDateKey(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
 
 type UnitMode = 'cm' | 'in';
+type TimeFilter = '7D' | '30D' | '60D';
 
-interface MetricMeta {
-  key: keyof BodyMeasurement;
-  label: string;
-  category: 'torso' | 'arms' | 'legs';
-  targetType: 'hypertrophy' | 'reduction' | 'neutral'; // determines whether growth is green
-  description: string;
-}
-
-const METRIC_DEFINITIONS: MetricMeta[] = [
-  { key: 'shoulders_cm', label: 'Shoulders', category: 'torso', targetType: 'hypertrophy', description: 'Circumference across deltoids for V-taper frame' },
-  { key: 'chest_cm', label: 'Chest', category: 'torso', targetType: 'hypertrophy', description: 'Measured across nipple line at normal exhale' },
-  { key: 'waist_cm', label: 'Waist', category: 'torso', targetType: 'reduction', description: 'Narrowest point / navel level at morning fasting' },
-  { key: 'hips_cm', label: 'Hips', category: 'torso', targetType: 'reduction', description: 'Widest point around glutes and pelvic crest' },
-  { key: 'arms_cm', label: 'Arms / Biceps', category: 'arms', targetType: 'hypertrophy', description: 'Peak flexed bicep circumference' },
-  { key: 'forearms_cm', label: 'Forearms', category: 'arms', targetType: 'hypertrophy', description: 'Widest flexed point below elbow' },
-  { key: 'thighs_cm', label: 'Thighs', category: 'legs', targetType: 'hypertrophy', description: 'Midpoint between hip crease and top of knee' },
-  { key: 'calves_cm', label: 'Calves', category: 'legs', targetType: 'hypertrophy', description: 'Widest point of the gastrocnemius' },
-  { key: 'neck_cm', label: 'Neck', category: 'torso', targetType: 'neutral', description: 'Just below the larynx / Adam’s apple' },
+const DEFAULT_OVERVIEW_SITES = [
+  { key: 'shoulders_cm', label: 'Shoulders', category: 'torso', target_type: 'hypertrophy' as const, icon_type: 'shoulders' },
+  { key: 'chest_cm', label: 'Chest', category: 'torso', target_type: 'hypertrophy' as const, icon_type: 'chest' },
+  { key: 'waist_cm', label: 'Waist', category: 'torso', target_type: 'reduction' as const, icon_type: 'waist' },
+  { key: 'hips_cm', label: 'Hips', category: 'torso', target_type: 'reduction' as const, icon_type: 'hips' },
+  { key: 'arms_cm', label: 'Arms', category: 'arms', target_type: 'hypertrophy' as const, icon_type: 'arms' },
+  { key: 'thighs_cm', label: 'Thighs', category: 'legs', target_type: 'hypertrophy' as const, icon_type: 'thighs' },
+  { key: 'calves_cm', label: 'Calves', category: 'legs', target_type: 'hypertrophy' as const, icon_type: 'calves' },
+  { key: 'neck_cm', label: 'Neck', category: 'torso', target_type: 'neutral' as const, icon_type: 'neck' },
 ];
+
+interface MeasurementSummaryData {
+  has_data: boolean;
+  total_logs: number;
+  kpis?: {
+    waist_change?: {
+      baseline_cm: number | null;
+      current_cm: number | null;
+      diff_cm: number | null;
+      diff_pct: number | null;
+      sparkline: number[];
+    };
+    shoulder_to_waist?: {
+      ratio: number | null;
+      target: number;
+      progress_pct: number;
+    };
+    chest_to_waist?: {
+      ratio: number | null;
+      target: number;
+      progress_pct: number;
+    };
+    measurements_logged?: {
+      total: number;
+      recent_pill: string;
+    };
+  };
+  overview?: OverviewItem[];
+  symmetry?: SymmetryItem[];
+  baseline_date?: string;
+  latest_date?: string;
+  dates?: string[];
+}
 
 export default function BodyMeasurementsPage() {
   const [measurements, setMeasurements] = useState<BodyMeasurement[]>([]);
+  const [weights, setWeights] = useState<WeightEntry[]>([]);
+  const [backendSummary, setBackendSummary] = useState<MeasurementSummaryData | null>(null);
+  const [checkpointData, setCheckpointData] = useState<CheckpointRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [unit, setUnit] = useState<UnitMode>('cm');
-  const [selectedMetricKey, setSelectedMetricKey] = useState<keyof BodyMeasurement>('waist_cm');
 
-  // Modal State
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [historyWeek, setHistoryWeek] = useState(1);
+  // Interactive selection
+  const [selectedMetricKey, setSelectedMetricKey] = useState<string>('waist_cm');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('30D');
+  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; date: string; value: number; unit: string } | null>(null);
 
-  // Comparison State
+  // Checkpoint Comparison Dates
   const [compareDateA, setCompareDateA] = useState<string>('');
   const [compareDateB, setCompareDateB] = useState<string>('');
 
-  // Form State
-  const [formDate, setFormDate] = useState<string>(localDateKey());
-  const [formNotes, setFormNotes] = useState<string>('');
-  const [formValues, setFormValues] = useState<Record<string, string>>({
-    neck_cm: '',
-    shoulders_cm: '',
-    chest_cm: '',
-    waist_cm: '',
-    hips_cm: '',
-    arms_cm: '',
-    biceps_left_cm: '',
-    biceps_right_cm: '',
-    forearms_cm: '',
-    thighs_cm: '',
-    thigh_left_cm: '',
-    thigh_right_cm: '',
-    calves_cm: '',
-    calf_left_cm: '',
-    calf_right_cm: '',
-  });
+  // Sorting state for Checkpoint Comparison
+  const [sortField, setSortField] = useState<'site' | 'baseline' | 'latest' | 'change' | 'changePct'>('site');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const loadData = async () => {
+  // History Log pagination (6 per page)
+  const [historyPage, setHistoryPage] = useState<number>(1);
+  const itemsPerPage = 6;
+
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<BodyMeasurement | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Load all measurements, weights, and backend-calculated summary
+  const loadData = useCallback(async () => {
     try {
-      const data = await api.getMeasurements();
-      const list: BodyMeasurement[] = Array.isArray(data) ? data : data.results || [];
-      // Sort oldest to newest for chronological calculations, but state will keep original order
-      setMeasurements(list);
-      if (list.length >= 2) {
-        setCompareDateA(list[list.length - 1].date); // baseline (oldest)
-        setCompareDateB(list[0].date); // latest
-      } else if (list.length === 1) {
-        setCompareDateA(list[0].date);
-        setCompareDateB(list[0].date);
+      const [mRes, wRes, summaryRes] = await Promise.allSettled([
+        api.getMeasurements(),
+        api.getWeights(),
+        api.getMeasurementSummary(),
+      ]);
+
+      let mList: BodyMeasurement[] = [];
+      if (mRes.status === 'fulfilled') {
+        const val = mRes.value;
+        mList = Array.isArray(val) ? val : (val as { results?: BodyMeasurement[] }).results || [];
+      }
+
+      let wList: WeightEntry[] = [];
+      if (wRes.status === 'fulfilled') {
+        const val = wRes.value;
+        wList = Array.isArray(val) ? val : (val as { results?: WeightEntry[] }).results || [];
+      }
+
+      let summary = null;
+      if (summaryRes.status === 'fulfilled') {
+        summary = summaryRes.value;
+        setBackendSummary(summary);
+      }
+
+      setMeasurements(mList);
+      setWeights(wList);
+
+      const dates = summary?.dates || mList.map((m) => m.date).sort();
+      if (dates.length >= 2) {
+        setCompareDateA(dates[0]);
+        setCompareDateB(dates[dates.length - 1]);
+      } else if (dates.length === 1) {
+        setCompareDateA(dates[0]);
+        setCompareDateB(dates[0]);
       }
     } catch (err) {
       console.error('Failed to load measurements', err);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
+  useEffect(() => {
+    let ignore = false;
+    void (async () => {
+      if (!ignore) {
+        await loadData();
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [loadData]);
+
+  // Load backend-calculated comparison whenever checkpoint dates change
+  useEffect(() => {
+    if (!compareDateA || !compareDateB) return;
+    let ignore = false;
+    async function fetchCompare() {
+      try {
+        const res = await api.compareMeasurements(compareDateA, compareDateB);
+        if (!ignore && res?.rows) {
+          setCheckpointData(res.rows);
+        }
+      } catch (err) {
+        console.error('Failed to fetch checkpoint comparison from backend', err);
+      }
+    }
+    fetchCompare();
+    return () => {
+      ignore = true;
+    };
+  }, [compareDateA, compareDateB]);
+
   // Conversion Helpers
-  const toDisplayValue = (valInCm?: number | null): string => {
-    if (valInCm === undefined || valInCm === null || isNaN(valInCm)) return '—';
-    if (unit === 'cm') return `${valInCm.toFixed(1)}`;
-    const inches = valInCm / 2.54;
-    return `${inches.toFixed(1)}`;
-  };
-
-  const toDisplayNumber = (valInCm?: number | null): number | null => {
-    if (valInCm === undefined || valInCm === null || isNaN(valInCm)) return null;
-    if (unit === 'cm') return Number(valInCm.toFixed(1));
-    return Number((valInCm / 2.54).toFixed(1));
-  };
-
-  // Convert input value to CM for saving
-  const inputToCm = (valStr: string): number | null => {
-    const parsed = parseFloat(valStr);
-    if (isNaN(parsed)) return null;
-    if (unit === 'cm') return parsed;
-    return parseFloat((parsed * 2.54).toFixed(2));
-  };
+  const toDisplayNumber = useCallback(
+    (valInCm?: number | null): number | null => {
+      if (valInCm === undefined || valInCm === null || isNaN(valInCm)) return null;
+      if (unit === 'cm') return Number(valInCm.toFixed(1));
+      return Number((valInCm / 2.54).toFixed(1));
+    },
+    [unit]
+  );
 
   // Chronological list (oldest to newest)
   const chronological = useMemo(() => {
-    return [...measurements].sort((a, b) => parseDateKey(a.date).getTime() - parseDateKey(b.date).getTime());
+    return [...measurements].sort((a, b) => a.date.localeCompare(b.date));
   }, [measurements]);
 
-  const latest = chronological.length > 0 ? chronological[chronological.length - 1] : null;
-  const baseline = chronological.length > 0 ? chronological[0] : null;
+  // Overview items from backend summary or fallback
+  const overviewItems: OverviewItem[] = useMemo(() => {
+    if (backendSummary?.overview && backendSummary.overview.length > 0) {
+      return backendSummary.overview;
+    }
+    const latest = chronological.length > 0 ? chronological[chronological.length - 1] : null;
+    const baseline = chronological.length > 0 ? chronological[0] : null;
 
-  // Key Ratios
-  const vTaperRatio = useMemo(() => {
-    if (!latest?.shoulders_cm || !latest?.waist_cm) return null;
-    return Number((latest.shoulders_cm / latest.waist_cm).toFixed(2));
-  }, [latest]);
-
-  const chestToWaistRatio = useMemo(() => {
-    if (!latest?.chest_cm || !latest?.waist_cm) return null;
-    return Number((latest.chest_cm / latest.waist_cm).toFixed(2));
-  }, [latest]);
-
-  const waistToHipRatio = useMemo(() => {
-    if (!latest?.waist_cm || !latest?.hips_cm) return null;
-    return Number((latest.waist_cm / latest.hips_cm).toFixed(2));
-  }, [latest]);
-
-  // Chart Data for Selected Metric
-  const selectedMetricMeta = METRIC_DEFINITIONS.find((m) => m.key === selectedMetricKey) || METRIC_DEFINITIONS[0];
-  const chartData = useMemo(() => {
-    return chronological
-      .filter((m) => m[selectedMetricKey] !== undefined && m[selectedMetricKey] !== null)
-      .map((m) => {
-        const val = toDisplayNumber(m[selectedMetricKey] as number);
-        return {
-          label: parseDateKey(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          value: val || 0,
-        };
-      });
-  }, [chronological, selectedMetricKey, unit]);
-
-  // Bilateral Symmetry Data
-  const symmetryData = useMemo(() => {
-    if (!latest) return null;
-    const compute = (left?: number | null, right?: number | null, label = '') => {
-      if (!left || !right) return null;
-      const diff = Math.abs(left - right);
-      const avg = (left + right) / 2;
-      const diffPct = ((diff / avg) * 100).toFixed(1);
-      const isBalanced = diff <= 0.4;
+    return DEFAULT_OVERVIEW_SITES.map((def) => {
+      const key = def.key as keyof BodyMeasurement;
+      const cur = latest?.[key] as number | undefined | null;
+      const base = baseline?.[key] as number | undefined | null;
+      const diff = cur !== undefined && cur !== null && base !== undefined && base !== null ? cur - base : null;
+      const diffPct = diff !== null && base ? (diff / base) * 100 : null;
       return {
-        label,
-        left: toDisplayValue(left),
-        right: toDisplayValue(right),
-        diff: toDisplayValue(diff),
-        diffPct,
-        isBalanced,
+        key: def.key,
+        label: def.label,
+        category: def.category,
+        target_type: def.target_type,
+        icon_type: def.icon_type,
+        current_cm: cur ?? null,
+        baseline_cm: base ?? null,
+        diff_cm: diff !== null ? Number(diff.toFixed(1)) : null,
+        diff_pct: diffPct !== null ? Number(diffPct.toFixed(1)) : null,
       };
-    };
-    return {
-      arms: compute(latest.biceps_left_cm, latest.biceps_right_cm, 'Biceps / Arms'),
-      thighs: compute(latest.thigh_left_cm, latest.thigh_right_cm, 'Thighs / Quads'),
-      calves: compute(latest.calf_left_cm, latest.calf_right_cm, 'Calves'),
-    };
-  }, [latest, unit]);
-
-  // Comparison calculation
-  const measurementA = chronological.find((m) => m.date === compareDateA);
-  const measurementB = chronological.find((m) => m.date === compareDateB);
-
-  // Form Handlers
-  const handleOpenNewModal = () => {
-    setEditingId(null);
-    setFormDate(localDateKey());
-    setFormNotes('');
-    setFormValues({
-      neck_cm: '',
-      shoulders_cm: '',
-      chest_cm: '',
-      waist_cm: '',
-      hips_cm: '',
-      arms_cm: '',
-      biceps_left_cm: '',
-      biceps_right_cm: '',
-      forearms_cm: '',
-      thighs_cm: '',
-      thigh_left_cm: '',
-      thigh_right_cm: '',
-      calves_cm: '',
-      calf_left_cm: '',
-      calf_right_cm: '',
     });
+  }, [backendSummary, chronological]);
+
+  // Symmetry items from backend summary
+  const symmetryItems: SymmetryItem[] = useMemo(() => {
+    return backendSummary?.symmetry || [];
+  }, [backendSummary]);
+
+  // Trend Analysis calculation for the shared common TrendChartCard
+  const trendAnalysis: TrendAnalysis = useMemo(() => {
+    const isWeight = selectedMetricKey === 'weight_kg';
+    const activeUnit = isWeight ? (unit === 'cm' ? 'kg' : 'lbs') : unit;
+
+    let rawEntries: Array<{ date: string; val: number; label: string }> = [];
+
+    if (isWeight) {
+      rawEntries = weights
+        .filter((w) => w.weight_kg != null)
+        .map((w) => {
+          const parts = w.date.split('-');
+          const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(w.date);
+          const val = unit === 'cm' ? w.weight_kg : Number((w.weight_kg * 2.20462).toFixed(1));
+          return {
+            date: w.date,
+            val,
+            label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          };
+        })
+        .sort((a, b) => a.date.localeCompare(b.date));
+    } else {
+      const key = selectedMetricKey as keyof BodyMeasurement;
+      rawEntries = chronological
+        .filter((m) => m[key] != null && typeof m[key] === 'number')
+        .map((m) => {
+          const parts = m.date.split('-');
+          const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(m.date);
+          const rawCm = m[key] as number;
+          const val = toDisplayNumber(rawCm) || 0;
+          return {
+            date: m.date,
+            val,
+            label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          };
+        })
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    // Default Goal computation
+    const isWaist = selectedMetricKey === 'waist_cm';
+    const goalVal = isWeight
+      ? (unit === 'cm' ? 75.0 : 165.0)
+      : isWaist
+      ? (toDisplayNumber(80.0) || 80.0)
+      : (overviewItems.find((o) => o.key === selectedMetricKey)?.baseline_cm
+          ? (toDisplayNumber(overviewItems.find((o) => o.key === selectedMetricKey)?.baseline_cm) || 0)
+          : 0);
+
+    const goalText = goalVal > 0 ? `${goalVal} ${activeUnit}` : '—';
+
+    if (rawEntries.length === 0) {
+      return {
+        hasData: false,
+        unit: activeUnit,
+        currentText: '—',
+        changeText: '—',
+        isChangeNegative: true,
+        goalText,
+        points: [],
+        pathD: '',
+        goalY: 0,
+        yTicks: [],
+        minVal: 0,
+        maxVal: 0,
+        padTop: 0,
+        usableH: 0,
+        range: 1,
+      };
+    }
+
+    const days = timeFilter === '7D' ? 7 : timeFilter === '30D' ? 30 : 60;
+    const latestDate = new Date(rawEntries[rawEntries.length - 1].date + 'T00:00:00');
+    const cutoffTimestamp = latestDate.getTime() - (days - 1) * 24 * 60 * 60 * 1000;
+
+    let filtered = rawEntries.filter((e) => new Date(e.date + 'T00:00:00').getTime() >= cutoffTimestamp);
+    if (filtered.length === 0) {
+      filtered = [rawEntries[rawEntries.length - 1]];
+    }
+
+    const curr = filtered[filtered.length - 1].val;
+    const initial = filtered[0].val;
+    const diff = Number((curr - initial).toFixed(1));
+    const diffPct = initial ? Math.abs((diff / initial) * 100).toFixed(1) : '0.0';
+    const isChangeNegative = diff < 0;
+    const changeSign = diff > 0 ? '+' : '';
+    const changeText = `${isChangeNegative ? '↓' : '↑'} ${changeSign}${diff} ${activeUnit} (${diffPct}%)`;
+
+    const vals = filtered.map((p) => p.val);
+    const effectiveGoal = goalVal > 0 ? goalVal : curr;
+    const minVal = Math.floor(Math.min(...vals, effectiveGoal) - 1);
+    const maxVal = Math.ceil(Math.max(...vals, effectiveGoal) + 1);
+    const range = maxVal - minVal || 1;
+
+    const svgWidth = 740;
+    const svgHeight = 190;
+    const padLeft = 40;
+    const padRight = 30;
+    const padTop = 20;
+    const padBottom = 30;
+    const usableW = svgWidth - padLeft - padRight;
+    const usableH = svgHeight - padTop - padBottom;
+
+    const points = filtered.map((item, idx) => {
+      const x = padLeft + (idx / Math.max(1, filtered.length - 1)) * usableW;
+      const y = padTop + (1 - (item.val - minVal) / range) * usableH;
+      return {
+        x,
+        y,
+        val: item.val,
+        date: item.label,
+        rawDate: item.date,
+      };
+    });
+
+    const pathD = points.reduce((acc, currPt, idx) => {
+      return idx === 0 ? `M ${currPt.x} ${currPt.y}` : `${acc} L ${currPt.x} ${currPt.y}`;
+    }, '');
+
+    const goalY = goalVal > 0 ? padTop + (1 - (goalVal - minVal) / range) * usableH : 0;
+
+    const step = Math.max(1, Math.round(range / 5));
+    const yTicks: number[] = [];
+    for (let t = minVal; t <= maxVal; t += step) {
+      yTicks.push(t);
+    }
+
+    return {
+      hasData: true,
+      unit: activeUnit,
+      currentText: `${curr} ${activeUnit}`,
+      changeText,
+      isChangeNegative,
+      goalText,
+      points,
+      pathD,
+      goalY,
+      yTicks,
+      minVal,
+      maxVal,
+      padTop,
+      usableH,
+      range,
+    };
+  }, [selectedMetricKey, weights, chronological, timeFilter, unit, toDisplayNumber, overviewItems]);
+
+  const selectedMetricLabel = useMemo(() => {
+    if (selectedMetricKey === 'weight_kg') return 'Weight';
+    const site = DEFAULT_OVERVIEW_SITES.find((s) => s.key === selectedMetricKey);
+    return site ? site.label : 'Measurement';
+  }, [selectedMetricKey]);
+
+  // Metric tab definitions for the trend chart with icons
+  const metricTabs: MetricTabOption<string>[] = useMemo(() => [
+    { key: 'weight_kg', label: 'Weight', icon: <Scale size={12} /> },
+    { key: 'waist_cm', label: 'Waist', icon: <Ruler size={12} /> },
+    ...(selectedMetricKey !== 'weight_kg' && selectedMetricKey !== 'waist_cm'
+      ? [{ key: selectedMetricKey, label: selectedMetricLabel, icon: <Ruler size={12} /> }]
+      : []),
+  ], [selectedMetricKey, selectedMetricLabel]);
+
+  // Handlers
+  const handleOpenNewModal = () => {
+    setEditingItem(null);
     setModalOpen(true);
   };
 
   const handleOpenEditModal = (item: BodyMeasurement) => {
-    setEditingId(item.id);
-    setFormDate(item.date);
-    setFormNotes(item.notes || '');
-    const newVals: Record<string, string> = {};
-    const keys: (keyof BodyMeasurement)[] = [
-      'neck_cm',
-      'shoulders_cm',
-      'chest_cm',
-      'waist_cm',
-      'hips_cm',
-      'arms_cm',
-      'biceps_left_cm',
-      'biceps_right_cm',
-      'forearms_cm',
-      'thighs_cm',
-      'thigh_left_cm',
-      'thigh_right_cm',
-      'calves_cm',
-      'calf_left_cm',
-      'calf_right_cm',
-    ];
-    keys.forEach((k) => {
-      const val = item[k];
-      if (typeof val === 'number') {
-        newVals[k] = unit === 'cm' ? val.toString() : (val / 2.54).toFixed(1);
-      } else {
-        newVals[k] = '';
-      }
-    });
-    setFormValues(newVals);
+    setEditingItem(item);
     setModalOpen(true);
-  };
-
-  const handleSaveMeasurement = async () => {
-    setSubmitting(true);
-    try {
-      const payload: Record<string, any> = {
-        date: formDate,
-        notes: formNotes,
-      };
-
-      Object.entries(formValues).forEach(([key, strVal]) => {
-        if (strVal.trim() !== '') {
-          const valInCm = inputToCm(strVal);
-          if (valInCm !== null) {
-            payload[key] = valInCm;
-          }
-        } else {
-          payload[key] = null;
-        }
-      });
-
-      if (editingId) {
-        await api.updateMeasurement(editingId, payload);
-      } else {
-        await api.logMeasurement(payload);
-      }
-      setModalOpen(false);
-      loadData();
-    } catch (err) {
-      console.error('Failed to save body measurement', err);
-      alert('Failed to save body measurement. Please check your inputs and try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // History log pagination: one page per 7-day window, counted back from the latest check-in
-  const historyWeeks = useMemo(() => {
-    const DAY_MS = 1000 * 60 * 60 * 24;
-    const sortedDesc = [...measurements].sort((a, b) => parseDateKey(b.date).getTime() - parseDateKey(a.date).getTime());
-    if (sortedDesc.length === 0) return [];
-    const latest = new Date(sortedDesc[0].date).getTime();
-    const buckets = new Map<number, BodyMeasurement[]>();
-    for (const m of sortedDesc) {
-      const idx = Math.floor(Math.round((latest - parseDateKey(m.date).getTime()) / DAY_MS) / 7);
-      if (!buckets.has(idx)) buckets.set(idx, []);
-      buckets.get(idx)!.push(m);
-    }
-    const fmt = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-    return [...buckets.entries()]
-      .sort(([a], [b]) => a - b)
-      .map(([idx, rows]) => {
-        const end = latest - idx * 7 * DAY_MS;
-        return { rows, label: `${fmt(end - 6 * DAY_MS)} – ${fmt(end)}` };
-      });
-  }, [measurements]);
-
-  const historyTotalPages = Math.max(1, historyWeeks.length);
-  const historySafePage = Math.min(historyWeek, historyTotalPages);
-  const historyRows = historyWeeks[historySafePage - 1]?.rows ?? [];
-
-  const getHistoryPageNumbers = (): (number | '...')[] => {
-    const pages: (number | '...')[] = [];
-    if (historyTotalPages <= 7) {
-      for (let i = 1; i <= historyTotalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (historySafePage > 3) pages.push('...');
-      const start = Math.max(2, historySafePage - 1);
-      const end = Math.min(historyTotalPages - 1, historySafePage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (historySafePage < historyTotalPages - 2) pages.push('...');
-      pages.push(historyTotalPages);
-    }
-    return pages;
   };
 
   const handleDelete = async (id: string) => {
@@ -360,20 +406,38 @@ export default function BodyMeasurementsPage() {
     }
   };
 
+  const handleSort = (field: 'site' | 'baseline' | 'latest' | 'change' | 'changePct') => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  if (loading && measurements.length === 0) {
+    return (
+      <div className={styles.page}>
+        <div style={{ padding: '6rem 1rem', textAlign: 'center', color: '#64748b' }}>
+          Loading body measurements...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
-      {/* Top Header & Action Row */}
       <div className={styles.header}>
-        <div>
-          <div className={styles.headerTitleWrap}>
-            <div className={styles.headerIcon}>
-              <Ruler size={22} color="var(--color-cyan)" />
-            </div>
-            <h1 className={styles.title}>Body Measurements</h1>
+        <div className={styles.headerTitleWrap}>
+          <div className={styles.headerIcon}>
+            <Ruler size={24} color="#0f766e" />
           </div>
-          <p className={styles.subtitle}>
-            Circumference metrics, V-taper symmetry ratios, and structural muscle hypertrophy progression.
-          </p>
+          <div>
+            <h1 className={styles.title}>Body Measurements</h1>
+            <p className={styles.subtitle}>
+              Track body composition, proportions and symmetry over time.
+            </p>
+          </div>
         </div>
 
         <div className={styles.headerActions}>
@@ -393,832 +457,83 @@ export default function BodyMeasurementsPage() {
             </button>
           </div>
 
-          <Button variant="primary" onClick={handleOpenNewModal}>
+          <button className={styles.logCheckinBtn} onClick={handleOpenNewModal}>
             <Plus size={16} />
-            <span>Log Check-in</span>
-          </Button>
+            <span>+ Log Check-in</span>
+          </button>
         </div>
       </div>
 
-      {/* KPI Aesthetic & Composition Cards */}
-      <div className={styles.kpiGrid}>
-        {/* V-Taper Card */}
-        <Card hoverable className={styles.kpiCard}>
-          <div className={styles.kpiHeader}>
-            <span className={styles.kpiLabel}>
-              V-Taper (Adonis Ratio)
-            </span>
-            <Badge variant="cyan">Shoulder / Waist</Badge>
-          </div>
-          <div className={styles.kpiValueRow}>
-            <span className={styles.kpiValue}>
-              {vTaperRatio !== null ? vTaperRatio : '—'}
-            </span>
-            <span className={styles.kpiTarget}>Target: 1.618</span>
-          </div>
-          <p className={styles.kpiHint}>
-            {vTaperRatio && vTaperRatio >= 1.5
-              ? 'Excellent athletic V-taper taper aesthetic.'
-              : 'Keep increasing shoulder width while tightening the midsection.'}
-          </p>
-        </Card>
+      {/* 1. Top KPI Cards Row */}
+      <MeasurementsKpiGrid kpis={backendSummary?.kpis} unit={unit} />
 
-        {/* Chest-to-Waist Ratio Card */}
-        <Card hoverable className={styles.kpiCard}>
-          <div className={styles.kpiHeader}>
-            <span className={styles.kpiLabel}>
-              Chest-to-Waist Ratio
-            </span>
-            <Badge variant="emerald">Torso Taper</Badge>
-          </div>
-          <div className={styles.kpiValueRow}>
-            <span className={styles.kpiValue}>
-              {chestToWaistRatio !== null ? chestToWaistRatio : '—'}
-            </span>
-            <span className={styles.kpiTargetSecondary}>Target: &gt; 1.25</span>
-          </div>
-          <p className={styles.kpiHint}>
-            Pectoral & lat mass expansion relative to abdominal circumference.
-          </p>
-        </Card>
+      {/* 2. Body Measurement Overview (8 Clickable Cards) */}
+      <OverviewGrid
+        items={overviewItems}
+        selectedKey={selectedMetricKey}
+        onSelectKey={setSelectedMetricKey}
+        unit={unit}
+        baselineDate={backendSummary?.baseline_date}
+      />
 
-        {/* Waist-to-Hip Ratio (WHR) */}
-        <Card hoverable className={styles.kpiCard}>
-          <div className={styles.kpiHeader}>
-            <span className={styles.kpiLabel}>
-              Waist-to-Hip Ratio
-            </span>
-            <Badge variant="violet">Health &amp; Leanness</Badge>
-          </div>
-          <div className={styles.kpiValueRow}>
-            <span className={styles.kpiValue}>
-              {waistToHipRatio !== null ? waistToHipRatio : '—'}
-            </span>
-            <span className={styles.kpiTarget}>Healthy: &lt; 0.90</span>
-          </div>
-          <p className={styles.kpiHint}>
-            Visceral abdominal fat distribution benchmark.
-          </p>
-        </Card>
+      {/* 3. Middle Section Grid: Trend Chart & Left vs Right Symmetry */}
+      <div className={styles.middleGrid}>
+        {/* Reusable Common TrendChartCard (Identical to Dashboard Chart) */}
+        <TrendChartCard
+          title={selectedMetricKey === 'waist_cm' || selectedMetricKey === 'weight_kg' ? 'Bodyweight & Waist Trend' : `${selectedMetricLabel} Trend`}
+          activeMetricTab={selectedMetricKey}
+          onMetricTabChange={(tabKey) => setSelectedMetricKey(tabKey)}
+          metricTabs={metricTabs}
+          timeRange={timeFilter}
+          onTimeRangeChange={setTimeFilter}
+          trendAnalysis={trendAnalysis}
+          hoveredPoint={hoveredPoint}
+          onHoverPoint={setHoveredPoint}
+          showGoal={true}
+        />
 
-        {/* Waist Tightening Delta */}
-        <Card hoverable className={styles.kpiCard}>
-          <div className={styles.kpiHeader}>
-            <span className={styles.kpiLabel}>
-              Total Waist Delta
-            </span>
-            <Badge variant="amber">Since Day 1</Badge>
-          </div>
-          <div className={styles.kpiValueRow}>
-            {latest?.waist_cm && baseline?.waist_cm ? (
-              (() => {
-                const diffCm = latest.waist_cm - baseline.waist_cm;
-                const diffDisp = unit === 'cm' ? diffCm.toFixed(1) : (diffCm / 2.54).toFixed(1);
-                const isLoss = diffCm < 0;
-                return (
-                  <>
-                    <span className={`${styles.kpiValue} ${isLoss ? styles.kpiValuePrimary : styles.kpiValueAmber}`}>
-                      {diffCm > 0 ? `+${diffDisp}` : diffDisp} {unit}
-                    </span>
-                    <span className={styles.kpiDeltaPct}>
-                      ({((diffCm / baseline.waist_cm) * 100).toFixed(1)}%)
-                    </span>
-                  </>
-                );
-              })()
-            ) : (
-              <span className={styles.kpiValue}>—</span>
-            )}
-          </div>
-          <p className={styles.kpiHint}>
-            Tightening midsection indicates core fat shedding while retaining muscle.
-          </p>
-        </Card>
+        {/* Symmetry Comparison */}
+        <SymmetryCard items={symmetryItems} unit={unit} />
       </div>
 
-      {/* Main Grid: Body Part Anatomical Cards + Interactive Progression Chart */}
-      <div className={styles.mainGrid}>
-        {/* Anatomical Metric Selector Cards */}
-        <div>
-          <div className={styles.sectionHeader}>
-            <div>
-              <h2 className={styles.sectionTitle}>Tracked Anatomical Sites</h2>
-              <p className={styles.sectionSubtitle}>
-                Click any body part to visualize historical trends on the timeline chart below.
-              </p>
-            </div>
-            <span className={styles.sectionMeta}>
-              Showing {METRIC_DEFINITIONS.length} key points
-            </span>
-          </div>
+      {/* 4. Bottom Section Grid: Checkpoint Comparison & History Log */}
+      <div className={styles.bottomGrid}>
+        <CheckpointComparisonCard
+          dates={backendSummary?.dates || measurements.map((m) => m.date)}
+          dateA={compareDateA}
+          dateB={compareDateB}
+          onDateAChange={setCompareDateA}
+          onDateBChange={setCompareDateB}
+          rows={checkpointData}
+          unit={unit}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+        />
 
-          <div className={styles.anatomicalGrid}>
-            {METRIC_DEFINITIONS.map((def) => {
-              const isSelected = selectedMetricKey === def.key;
-              const currentValCm = latest?.[def.key] as number | undefined | null;
-              const baselineValCm = baseline?.[def.key] as number | undefined | null;
-
-              let deltaStr = '—';
-              let deltaClass = styles.deltaBoldMuted;
-              if (currentValCm && baselineValCm && currentValCm !== baselineValCm) {
-                const diffCm = currentValCm - baselineValCm;
-                const diffDisp = unit === 'cm' ? diffCm.toFixed(1) : (diffCm / 2.54).toFixed(1);
-                const isPositive = diffCm > 0;
-                deltaStr = isPositive ? `+${diffDisp} ${unit}` : `${diffDisp} ${unit}`;
-
-                if (def.targetType === 'hypertrophy') {
-                  deltaClass = isPositive ? styles.deltaBoldPrimary : styles.deltaBoldAmber;
-                } else if (def.targetType === 'reduction') {
-                  deltaClass = !isPositive ? styles.deltaBoldPrimary : styles.deltaBoldAmber;
-                } else {
-                  deltaClass = styles.deltaBoldCyan;
-                }
-              }
-
-              return (
-                <div
-                  key={def.key}
-                  onClick={() => setSelectedMetricKey(def.key)}
-                  className={`${styles.anatomicalCard} ${isSelected ? styles.anatomicalCardSelected : ''}`}
-                >
-                  <div className={styles.anatomicalHeader}>
-                    <div>
-                      <div className={`${styles.anatomicalName} ${isSelected ? styles.anatomicalNameSelected : ''}`}>
-                        {def.label}
-                      </div>
-                      <div className={styles.anatomicalCategory}>
-                        {def.category}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <Badge variant="emerald" className={styles.anatomicalActiveBadge}>
-                        Active Chart
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className={styles.anatomicalValue}>
-                      {toDisplayValue(currentValCm)}{' '}
-                      <span className={styles.anatomicalUnit}>
-                        {unit}
-                      </span>
-                    </div>
-                    <div className={styles.anatomicalSubRow}>
-                      <span className={styles.anatomicalBase}>
-                        Base: {toDisplayValue(baselineValCm)} {unit}
-                      </span>
-                      <span className={deltaClass}>{deltaStr}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Interactive Progression Chart */}
-        <Card elevated>
-          <div className={styles.chartCardHeader}>
-            <div>
-              <div className={styles.chartTitleRow}>
-                <Activity size={18} color="var(--color-primary)" />
-                <h3 className={styles.chartTitle}>
-                  {selectedMetricMeta.label} Progression Over Time
-                </h3>
-              </div>
-              <p className={styles.chartSubtitle}>
-                {selectedMetricMeta.description}
-              </p>
-            </div>
-
-            <div className={styles.chartPointsWrap}>
-              <span className={styles.chartPointsLabel}>
-                Data Points:
-              </span>
-              <Badge variant="cyan">{chartData.length} Logs</Badge>
-            </div>
-          </div>
-
-          <MetricChart
-            data={chartData}
-            title={`${selectedMetricMeta.label} (${unit.toUpperCase()})`}
-            unit={unit}
-            type="line"
-            color={selectedMetricMeta.targetType === 'reduction' ? '#06B6D4' : '#10B981'}
-            height={260}
-            emptyMessage={`No measurements recorded yet for ${selectedMetricMeta.label}. Click "Log Check-in" above!`}
-          />
-        </Card>
-      </div>
-
-      {/* Bilateral Symmetry & Balance Analysis */}
-      <div>
-        <div className={styles.symmetryHeader}>
-          <ArrowLeftRight size={20} color="var(--color-primary)" />
-          <h2 className={styles.sectionTitle}>Bilateral Symmetry &amp; Muscular Balance</h2>
-        </div>
-        <p className={styles.symmetrySubtitle}>
-          Comparing left vs. right limb development to catch imbalances before they cause injury or postural distortion.
-        </p>
-
-        <div className={styles.symmetryGrid}>
-          {[
-            { title: 'Arms / Biceps', data: symmetryData?.arms },
-            { title: 'Thighs / Quads', data: symmetryData?.thighs },
-            { title: 'Calves', data: symmetryData?.calves },
-          ].map((item) => (
-            <Card key={item.title} hoverable>
-              <div className={styles.symmetryCardHeader}>
-                <span className={styles.symmetryCardTitle}>{item.title}</span>
-                {item.data ? (
-                  item.data.isBalanced ? (
-                    <Badge variant="emerald">Balanced</Badge>
-                  ) : (
-                    <Badge variant="amber">Slight Asymmetry</Badge>
-                  )
-                ) : (
-                  <Badge variant="cyan">Unlogged</Badge>
-                )}
-              </div>
-
-              {item.data ? (
-                <div className={styles.symmetryBody}>
-                  <div className={styles.symmetryLimbGrid}>
-                    <div className={styles.symmetryLimbBox}>
-                      <div className={styles.symmetryLimbTag}>LEFT</div>
-                      <div className={styles.symmetryLimbVal}>
-                        {item.data.left} <span className={styles.symmetryLimbUnit}>{unit}</span>
-                      </div>
-                    </div>
-                    <div className={styles.symmetryLimbBox}>
-                      <div className={styles.symmetryLimbTag}>RIGHT</div>
-                      <div className={styles.symmetryLimbVal}>
-                        {item.data.right} <span className={styles.symmetryLimbUnit}>{unit}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={styles.symmetryStats}>
-                    <span>Delta: {item.data.diff} {unit}</span>
-                    <span>Variance: {item.data.diffPct}%</span>
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.symmetryEmpty}>
-                  Log both left &amp; right measurements during check-in to enable bilateral analysis.
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Side-by-Side Date Comparison Tool */}
-      {measurements.length >= 2 && (
-        <Card elevated>
-          <div className={styles.compareCardHeader}>
-            <div>
-              <div className={styles.chartTitleRow}>
-                <Calendar size={18} color="var(--color-primary)" />
-                <h3 className={styles.chartTitle}>Side-by-Side Milestone Comparison</h3>
-              </div>
-              <p className={styles.chartSubtitle}>
-                Compare body metrics across any two checkpoint dates to evaluate phase transformations.
-              </p>
-            </div>
-
-            <div className={styles.comparePickers}>
-              <div className={styles.comparePicker}>
-                <span className={styles.comparePickerLabel}>Baseline A:</span>
-                <select
-                  value={compareDateA}
-                  onChange={(e) => setCompareDateA(e.target.value)}
-                  className={styles.compareSelect}
-                >
-                  {chronological.map((m) => (
-                    <option key={m.id} value={m.date}>
-                      {m.date}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <span className={styles.compareVs}>vs</span>
-
-              <div className={styles.comparePicker}>
-                <span className={styles.comparePickerLabel}>Checkpoint B:</span>
-                <select
-                  value={compareDateB}
-                  onChange={(e) => setCompareDateB(e.target.value)}
-                  className={styles.compareSelect}
-                >
-                  {chronological.map((m) => (
-                    <option key={m.id} value={m.date}>
-                      {m.date}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr className={styles.tableTheadRow}>
-                  <th className={styles.tableTh}>Body Site</th>
-                  <th className={styles.tableTh}>{compareDateA}</th>
-                  <th className={styles.tableTh}>{compareDateB}</th>
-                  <th className={styles.tableTh}>Net Delta</th>
-                  <th className={styles.tableTh}>% Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                {METRIC_DEFINITIONS.map((def) => {
-                  const valA = measurementA?.[def.key] as number | undefined | null;
-                  const valB = measurementB?.[def.key] as number | undefined | null;
-
-                  let delta = '—';
-                  let pct = '—';
-                  let deltaBoldClass = styles.deltaBoldMuted;
-                  let deltaSemiBoldClass = styles.deltaSemiBoldMuted;
-
-                  if (valA && valB) {
-                    const diffCm = valB - valA;
-                    const diffDisp = unit === 'cm' ? diffCm.toFixed(1) : (diffCm / 2.54).toFixed(1);
-                    delta = diffCm > 0 ? `+${diffDisp} ${unit}` : `${diffDisp} ${unit}`;
-                    const pctVal = ((diffCm / valA) * 100).toFixed(1);
-                    pct = `${diffCm > 0 ? `+${pctVal}` : pctVal}%`;
-
-                    if (def.targetType === 'hypertrophy') {
-                      deltaBoldClass = diffCm > 0 ? styles.deltaBoldPrimary : diffCm < 0 ? styles.deltaBoldAmber : styles.deltaBoldMuted;
-                      deltaSemiBoldClass = diffCm > 0 ? styles.deltaSemiBoldPrimary : diffCm < 0 ? styles.deltaSemiBoldAmber : styles.deltaSemiBoldMuted;
-                    } else if (def.targetType === 'reduction') {
-                      deltaBoldClass = diffCm < 0 ? styles.deltaBoldPrimary : diffCm > 0 ? styles.deltaBoldAmber : styles.deltaBoldMuted;
-                      deltaSemiBoldClass = diffCm < 0 ? styles.deltaSemiBoldPrimary : diffCm > 0 ? styles.deltaSemiBoldAmber : styles.deltaSemiBoldMuted;
-                    } else {
-                      deltaBoldClass = styles.deltaBoldCyan;
-                      deltaSemiBoldClass = styles.deltaSemiBoldCyan;
-                    }
-                  }
-
-                  return (
-                    <tr key={def.key} className={styles.tableRow}>
-                      <td className={styles.tableTdLabel}>{def.label}</td>
-                      <td className={styles.tableTdSecondary}>
-                        {toDisplayValue(valA)} {unit}
-                      </td>
-                      <td className={styles.tableTdBold}>
-                        {toDisplayValue(valB)} {unit}
-                      </td>
-                      <td className={`${styles.tableTd} ${deltaBoldClass}`}>
-                        {delta}
-                      </td>
-                      <td className={`${styles.tableTd} ${deltaSemiBoldClass}`}>
-                        {pct}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {/* History Log Table */}
-      <div>
-        <div className={styles.historyHeader}>
-          <div>
-            <h2 className={styles.sectionTitle}>Check-in History Log</h2>
-            <p className={styles.sectionSubtitle}>
-              Full chronological log of recorded body dimensions.
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleOpenNewModal}>
-            <Plus size={14} />
-            <span>Add Log</span>
-          </Button>
-        </div>
-
-        <Card>
-          {measurements.length === 0 ? (
-            <div className={styles.historyEmpty}>
-              <Ruler size={36} color="var(--border-subtle)" className={styles.historyEmptyIcon} />
-              <p className={styles.historyEmptyTitle}>No measurement logs recorded yet</p>
-              <p className={styles.historyEmptyText}>
-                Log your first check-in to start mapping your muscular and body composition trajectory.
-              </p>
-              <Button variant="primary" onClick={handleOpenNewModal} className={styles.historyEmptyBtn}>
-                <Plus size={16} />
-                <span>Log Your Baseline Measurements</span>
-              </Button>
-            </div>
-          ) : (
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr className={styles.tableTheadRow}>
-                    <th className={styles.tableThPad}>Date</th>
-                    <th className={styles.tableThPad}>Shoulders</th>
-                    <th className={styles.tableThPad}>Chest</th>
-                    <th className={styles.tableThPad}>Waist</th>
-                    <th className={styles.tableThPad}>Hips</th>
-                    <th className={styles.tableThPad}>Arms</th>
-                    <th className={styles.tableThPad}>Thighs</th>
-                    <th className={styles.tableThPad}>Calves</th>
-                    <th className={styles.tableThPad}>Notes</th>
-                    <th className={styles.tableThRight}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historyRows.map((m) => (
-                    <tr key={m.id} className={styles.tableRow}>
-                      <td className={styles.tableTdDate}>
-                        {m.date}
-                      </td>
-                      <td className={styles.tableTd}>{toDisplayValue(m.shoulders_cm)}</td>
-                      <td className={styles.tableTd}>{toDisplayValue(m.chest_cm)}</td>
-                      <td className={styles.tableTdPrimary}>
-                        {toDisplayValue(m.waist_cm)}
-                      </td>
-                      <td className={styles.tableTd}>{toDisplayValue(m.hips_cm)}</td>
-                      <td className={styles.tableTd}>{toDisplayValue(m.arms_cm)}</td>
-                      <td className={styles.tableTd}>{toDisplayValue(m.thighs_cm)}</td>
-                      <td className={styles.tableTd}>{toDisplayValue(m.calves_cm)}</td>
-                      <td className={styles.tableTdNotes}>
-                        {m.notes || '—'}
-                      </td>
-                      <td className={styles.tableTdActions}>
-                        <div className={styles.actionBtnGroup}>
-                          <button
-                            onClick={() => handleOpenEditModal(m)}
-                            title="Edit log"
-                            className={styles.actionIconBtn}
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirmId(m.id)}
-                            title="Delete log"
-                            className={styles.actionDeleteBtn}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {historyTotalPages > 1 && (
-            <nav className={styles.pagination} aria-label="Check-in history pagination">
-              <span className={styles.pageSummary}>
-                {historySafePage === 1 ? 'Latest week' : `Week ${historySafePage}`} · {historyWeeks[historySafePage - 1]?.label}
-              </span>
-
-              <div className={styles.pageControls}>
-                <button
-                  className={styles.pageBtn}
-                  onClick={() => setHistoryWeek(p => Math.max(1, p - 1))}
-                  disabled={historySafePage === 1}
-                  aria-label="Newer week"
-                >
-                  <ChevronLeft size={16} />
-                  <span className={styles.pageBtnLabel}>Newer</span>
-                </button>
-
-                <div className={styles.pageNumbers}>
-                  {getHistoryPageNumbers().map((page, i) =>
-                    page === '...' ? (
-                      <span key={`ellipsis-${i}`} className={styles.pageEllipsis}>…</span>
-                    ) : (
-                      <button
-                        key={page}
-                        onClick={() => setHistoryWeek(page)}
-                        className={`${styles.pageNumber} ${historySafePage === page ? styles.pageNumberActive : ''}`}
-                        aria-current={historySafePage === page ? 'page' : undefined}
-                        title={historyWeeks[page - 1]?.label}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                <button
-                  className={styles.pageBtn}
-                  onClick={() => setHistoryWeek(p => Math.min(historyTotalPages, p + 1))}
-                  disabled={historySafePage === historyTotalPages}
-                  aria-label="Older week"
-                >
-                  <span className={styles.pageBtnLabel}>Older</span>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </nav>
-          )}
-        </Card>
+        <HistoryLogCard
+          measurements={measurements}
+          page={historyPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setHistoryPage}
+          onAddLog={handleOpenNewModal}
+          onEditLog={handleOpenEditModal}
+          onDeleteLog={(id) => setDeleteConfirmId(id)}
+          unit={unit}
+        />
       </div>
 
       {/* Log / Edit Measurement Modal */}
-      <Modal
+      <MeasurementModal
         isOpen={modalOpen}
+        editingItem={editingItem}
         onClose={() => setModalOpen(false)}
-        title={editingId ? 'Edit Body Check-in' : 'Log New Body Measurements'}
-      >
-        <div className={styles.modalBody}>
-          {/* Top Row: Date & Active Unit */}
-          <div className={styles.modalTopGrid}>
-            <div>
-              <label className={styles.formLabel}>
-                Check-in Date
-              </label>
-              <input
-                type="date"
-                value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-                className={styles.formDateInput}
-              />
-            </div>
-            <div>
-              <label className={styles.formLabel}>
-                Unit Mode
-              </label>
-              <div className={styles.unitBadgeWrap}>
-                <Badge variant={unit === 'cm' ? 'emerald' : 'cyan'}>
-                  Entering in {unit.toUpperCase()}
-                </Badge>
-                <span className={styles.unitHint}>
-                  (Toggle on main page to switch)
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Torso & Core Section */}
-          <div>
-            <div className={`${styles.formSectionTitle} ${styles.formSectionPrimary}`}>
-              Torso &amp; Core
-            </div>
-            <div className={styles.formGrid}>
-              <div>
-                <label className={styles.formSubLabel}>
-                  Waist ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 82.5"
-                  value={formValues.waist_cm}
-                  onChange={(e) => setFormValues({ ...formValues, waist_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Chest ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 104.0"
-                  value={formValues.chest_cm}
-                  onChange={(e) => setFormValues({ ...formValues, chest_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Shoulders ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 120.0"
-                  value={formValues.shoulders_cm}
-                  onChange={(e) => setFormValues({ ...formValues, shoulders_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Hips ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 98.0"
-                  value={formValues.hips_cm}
-                  onChange={(e) => setFormValues({ ...formValues, hips_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Neck ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 38.5"
-                  value={formValues.neck_cm}
-                  onChange={(e) => setFormValues({ ...formValues, neck_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Arms & Forearms Section */}
-          <div>
-            <div className={`${styles.formSectionTitle} ${styles.formSectionCyan}`}>
-              Arms &amp; Forearms
-            </div>
-            <div className={styles.formGrid}>
-              <div>
-                <label className={styles.formSubLabel}>
-                  Arms / Biceps ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 38.0"
-                  value={formValues.arms_cm}
-                  onChange={(e) => setFormValues({ ...formValues, arms_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Left Bicep ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 37.8"
-                  value={formValues.biceps_left_cm}
-                  onChange={(e) => setFormValues({ ...formValues, biceps_left_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Right Bicep ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 38.0"
-                  value={formValues.biceps_right_cm}
-                  onChange={(e) => setFormValues({ ...formValues, biceps_right_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Forearms ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 31.5"
-                  value={formValues.forearms_cm}
-                  onChange={(e) => setFormValues({ ...formValues, forearms_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Lower Body & Calves Section */}
-          <div>
-            <div className={`${styles.formSectionTitle} ${styles.formSectionViolet}`}>
-              Lower Body &amp; Calves
-            </div>
-            <div className={styles.formGrid}>
-              <div>
-                <label className={styles.formSubLabel}>
-                  Thighs ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 58.5"
-                  value={formValues.thighs_cm}
-                  onChange={(e) => setFormValues({ ...formValues, thighs_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Left Thigh ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 58.5"
-                  value={formValues.thigh_left_cm}
-                  onChange={(e) => setFormValues({ ...formValues, thigh_left_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Right Thigh ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 58.7"
-                  value={formValues.thigh_right_cm}
-                  onChange={(e) => setFormValues({ ...formValues, thigh_right_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Calves ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 37.5"
-                  value={formValues.calves_cm}
-                  onChange={(e) => setFormValues({ ...formValues, calves_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Left Calf ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 37.5"
-                  value={formValues.calf_left_cm}
-                  onChange={(e) => setFormValues({ ...formValues, calf_left_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.formSubLabel}>
-                  Right Calf ({unit})
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g. 37.5"
-                  value={formValues.calf_right_cm}
-                  onChange={(e) => setFormValues({ ...formValues, calf_right_cm: e.target.value })}
-                  className={styles.formNumberInput}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Notes Section */}
-          <div>
-            <label className={styles.formLabel}>
-              Check-in Notes &amp; Observations
-            </label>
-            <textarea
-              rows={2}
-              placeholder="e.g. Fasted morning check-in. Vascularity noticeable on shoulders."
-              value={formNotes}
-              onChange={(e) => setFormNotes(e.target.value)}
-              className={styles.formNotesTextarea}
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className={styles.modalActions}>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleSaveMeasurement} disabled={submitting}>
-              {submitting ? 'Saving...' : editingId ? 'Update Check-in' : 'Save Check-in'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onSuccess={() => {
+          setModalOpen(false);
+          loadData();
+        }}
+        unit={unit}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal

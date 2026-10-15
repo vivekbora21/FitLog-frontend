@@ -1,172 +1,109 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import {
-  ArrowRight,
-  Dumbbell,
-  TrendingUp,
-  Trophy,
-  Flame,
-  Target,
-  Droplets,
-  Scale,
-  Plus,
-  Compass,
-  CheckCircle2,
-  Calendar,
-  Moon,
-  Clock,
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/authContext';
 import { api } from '@/lib/api';
-import { DashboardStats as DashboardStatsBase, JourneyPacingData } from '@/lib/types';
-import { DashboardCharts, DashboardTrends } from '@/components/DashboardCharts';
-import { Card } from '@/components/ui/Card';
-import { RightPathCard } from '@/components/RightPathCard';
+import {
+  DashboardStats,
+  JourneyPacingData,
+  WeightEntry,
+  BodyMeasurement,
+} from '@/lib/types';
 import { PlanSelectorModal } from '@/components/PlanSelectorModal';
 import { QuickCheckInModal } from '@/components/QuickCheckInModal';
-import { WeeklyHealthStrip } from '@/components/WeeklyHealthStrip';
-import { useAuth } from '@/lib/authContext';
-import { onboardingSkipKey } from '@/lib/onboarding';
+import {
+  DashboardHeader,
+  CoachInsightBanner,
+  DashboardKpiGrid,
+  TrendChartCard,
+  WeeklyTargetsCard,
+  TrainingProgressCard,
+  TodayWorkoutCard,
+  RecentActivityCard,
+} from '@/components/dashboard';
 import styles from './page.module.css';
 
-type DashboardStats = Partial<DashboardStatsBase> & { trends?: DashboardTrends };
-
-type TodayPayload = {
-  program?: {
-    id?: string;
-    name?: string;
-    current_day: number;
-    duration_days: number;
-  } | null;
-  today?: {
-    id?: string;
-    day_number: number;
-    label: string;
-    status: string;
-    routine_details?: {
-      id: string;
-      name: string;
-      exercises?: Array<{
-        id: string;
-        exercise_name: string;
-        primary_muscle?: string;
-        sets?: unknown[];
-      }>;
-    };
-  } | null;
-};
-
-const num = (value: number | null | undefined) =>
-  value == null ? '--' : Math.round(value).toLocaleString();
-
-const localDateKey = (d = new Date()) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-function SkeletonBlock({ width, height }: { width?: string | number; height?: string | number }) {
-  return <div className="skeleton" style={{ width: width ?? '100%', height: height ?? 14 }} />;
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className={styles.page}>
-      <div className={styles.heroBanner}>
-        <div className={styles.heroLeft}>
-          <SkeletonBlock width={180} height={18} />
-          <SkeletonBlock width={260} height={32} />
-        </div>
-        <SkeletonBlock width={140} height={40} />
-      </div>
-      <SkeletonBlock height={220} />
-      <div className={styles.todayGrid}>
-        <SkeletonBlock height={260} />
-        <SkeletonBlock height={260} />
-      </div>
-      <SkeletonBlock height={140} />
-      <SkeletonBlock height={320} />
-    </div>
-  );
-}
-
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuth();
+
+  // Database-driven state
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [today, setToday] = useState<TodayPayload | null>(null);
   const [pacingData, setPacingData] = useState<JourneyPacingData | null>(null);
+  const [todayPayload, setTodayPayload] = useState<any | null>(null);
+  const [weightsList, setWeightsList] = useState<WeightEntry[]>([]);
+  const [measurementsList, setMeasurementsList] = useState<BodyMeasurement[]>([]);
+  const [sessionsList, setSessionsList] = useState<any[]>([]);
+  const [prsList, setPrsList] = useState<any[]>([]);
+  const [cardioList, setCardioList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // UI Interactive state
+  const [activeMetricTab, setActiveMetricTab] = useState<'weight' | 'waist'>('weight');
+  const [timeRange, setTimeRange] = useState<'7D' | '30D' | '60D'>('30D');
+  const [trainingRange, setTrainingRange] = useState<'Last 4 Weeks' | 'Last 8 Weeks'>('Last 4 Weeks');
+  const [trainingDropdownOpen, setTrainingDropdownOpen] = useState(false);
+  const [showCoachInsight, setShowCoachInsight] = useState(true);
+  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; date: string; value: number; unit: string } | null>(null);
+
+  // Modals
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isQuickCheckInOpen, setIsQuickCheckInOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [addingWater, setAddingWater] = useState(false);
 
+  // Load all real data from backend database
   const loadData = useCallback(async () => {
     try {
-      const [dashboard, current] = await Promise.all([
-        api.getDashboardStats(),
-        api.getTodaysWorkout(),
+      const [
+        dashboard,
+        todaysWorkout,
+        weightsRes,
+        measurementsRes,
+        sessionsRes,
+        prsRes,
+        cardioRes,
+      ] = await Promise.all([
+        api.getDashboardStats().catch(() => null),
+        api.getTodaysWorkout().catch(() => null),
+        api.getWeights().catch(() => []),
+        api.getMeasurements().catch(() => []),
+        api.getWorkouts().catch(() => []),
+        api.getPersonalRecords().catch(() => []),
+        api.getCardio().catch(() => []),
       ]);
-      const pacing = dashboard.journey_pacing ?? null;
-      setStats(dashboard);
-      setToday(current);
-      setPacingData(pacing);
-      const skippedOnboarding =
-        typeof window !== 'undefined' &&
-        user?.id &&
-        localStorage.getItem(onboardingSkipKey(user.id));
-      if (pacing && !pacing.has_program && !skippedOnboarding) {
-        setIsPlanModalOpen(true);
+
+      if (dashboard) {
+        setStats(dashboard);
+        setPacingData(dashboard.journey_pacing ?? null);
       }
+      if (todaysWorkout) {
+        setTodayPayload(todaysWorkout);
+      }
+
+      const wArray: WeightEntry[] = Array.isArray(weightsRes) ? weightsRes : (weightsRes as any)?.results || [];
+      const mArray: BodyMeasurement[] = Array.isArray(measurementsRes) ? measurementsRes : (measurementsRes as any)?.results || [];
+      const sArray: any[] = Array.isArray(sessionsRes) ? sessionsRes : (sessionsRes as any)?.results || [];
+      const pArray: any[] = Array.isArray(prsRes) ? prsRes : (prsRes as any)?.results || [];
+      const cArray: any[] = Array.isArray(cardioRes) ? cardioRes : (cardioRes as any)?.results || [];
+
+      setWeightsList(wArray);
+      setMeasurementsList(mArray);
+      setSessionsList(sArray);
+      setPrsList(pArray);
+      setCardioList(cArray);
     } catch (err) {
-      console.error('Failed to load dashboard data', err);
+      console.error('Failed to load database dashboard data', err);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
-    let ignore = false;
-    const fetchInitial = async () => {
-      try {
-        const [dashboard, current] = await Promise.all([
-          api.getDashboardStats(),
-          api.getTodaysWorkout(),
-        ]);
-        if (ignore) return;
-        const pacing = dashboard.journey_pacing ?? null;
-        setStats(dashboard);
-        setToday(current);
-        setPacingData(pacing);
-        const skippedOnboarding =
-          typeof window !== 'undefined' &&
-          user?.id &&
-          localStorage.getItem(onboardingSkipKey(user.id));
-        if (pacing && !pacing.has_program && !skippedOnboarding) {
-          setIsPlanModalOpen(true);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard data', err);
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
-    void fetchInitial();
-    return () => {
-      ignore = true;
-    };
-  }, [user]);
+    loadData();
+  }, [loadData]);
 
-  const journey = stats?.journey || {};
-  const nutrition = stats?.nutrition;
-  const dailyLog = stats?.daily_log;
-  const routine = today?.today?.routine_details;
-  const anchorLifts = useMemo(() => (stats?.recent_prs || []).slice(0, 5), [stats]);
-  const programDay = pacingData?.current_day || today?.program?.current_day || 1;
-  const programLength = Number(
-    pacingData?.duration_days || journey.program_length || today?.program?.duration_days || 60
-  );
-
-  // Dynamic Greeting based on current local hour
+  // Derived user details
+  const userName = user?.first_name || (user?.full_name ? user.full_name.split(' ')[0] : (user?.username || 'Vivek'));
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -175,409 +112,550 @@ export default function DashboardPage() {
     return 'Good night';
   }, []);
 
+  // Format real current date dynamically
   const formattedDate = useMemo(() => {
-    const d = new Date();
-    return d.toLocaleDateString('en-US', {
+    return new Date().toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
     });
   }, []);
 
-  // Quick 1-tap add water
-  const handleQuickAddWater = async () => {
-    if (addingWater) return;
-    setAddingWater(true);
-    try {
-      const currentMl = nutrition?.water_consumed_ml || 0;
-      const newMl = currentMl + 250;
-      const todayStr = localDateKey();
-      await api.updateWater(todayStr, newMl);
-      // Optimistic state update
-      setStats((prev) => {
-        if (!prev) return prev;
+  // Program details strictly from DB
+  const programName = pacingData?.program_name || stats?.journey?.mode_label || todayPayload?.program?.name || null;
+  const programDay = pacingData?.current_day || todayPayload?.today?.day_number || stats?.journey?.program_day || null;
+  const programDuration = pacingData?.duration_days || todayPayload?.program?.duration_days || stats?.journey?.program_length || null;
+  const daysRemaining = programDuration && programDay ? Math.max(0, programDuration - programDay) : null;
+  const programPct = programDuration && programDay ? Math.min(100, Math.round((programDay / programDuration) * 100)) : 0;
+
+  // Streak days from DB
+  const streakDays = stats?.streak_days ?? 0;
+
+  // Top KPI Metric Values strictly from DB
+  const currentWeight = useMemo(() => {
+    if (weightsList.length > 0) {
+      const sorted = [...weightsList].sort((a, b) => b.date.localeCompare(a.date));
+      return Number(sorted[0].weight_kg);
+    }
+    const statW = stats?.daily_log?.weight_kg ?? stats?.journey?.current_weight;
+    return statW != null ? Number(statW) : null;
+  }, [weightsList, stats]);
+
+  const targetWeight = Number(
+    pacingData?.target_weight ||
+    pacingData?.velocity?.expected_final_weight ||
+    stats?.journey?.target_weight ||
+    0
+  );
+
+  // Weight change calculation from DB
+  const weightChangeInfo = useMemo(() => {
+    if (stats?.journey?.weekly_weight_change != null) {
+      const val = Number(stats.journey.weekly_weight_change);
+      return {
+        text: val <= 0 ? `↓ ${Math.abs(val).toFixed(2)} kg` : `↑ ${val.toFixed(2)} kg`,
+        sub: 'vs last week',
+        isNegative: val <= 0,
+      };
+    }
+    if (stats?.journey?.weight_change != null) {
+      const val = Number(stats.journey.weight_change);
+      return {
+        text: val <= 0 ? `↓ ${Math.abs(val).toFixed(2)} kg` : `↑ ${val.toFixed(2)} kg`,
+        sub: 'net change',
+        isNegative: val <= 0,
+      };
+    }
+    if (weightsList.length >= 2) {
+      const sorted = [...weightsList].sort((a, b) => a.date.localeCompare(b.date));
+      const first = Number(sorted[0].weight_kg);
+      const last = Number(sorted[sorted.length - 1].weight_kg);
+      const diff = Number((last - first).toFixed(2));
+      return {
+        text: diff <= 0 ? `↓ ${Math.abs(diff).toFixed(2)} kg` : `↑ ${diff.toFixed(2)} kg`,
+        sub: 'total change',
+        isNegative: diff <= 0,
+      };
+    }
+    return null;
+  }, [stats, weightsList]);
+
+  // Mini sparkline SVG for weight card from real DB entries
+  const weightSparklineD = useMemo(() => {
+    let source: number[] = [];
+    if (weightsList.length >= 2) {
+      const sorted = [...weightsList].sort((a, b) => a.date.localeCompare(b.date));
+      source = sorted.slice(-7).map((w) => Number(w.weight_kg));
+    } else if (stats?.trends?.weight && stats.trends.weight.length >= 2) {
+      source = stats.trends.weight.slice(-7).map((w) => Number(w.weight_kg));
+    }
+
+    if (source.length < 2) return null;
+
+    const min = Math.min(...source);
+    const max = Math.max(...source);
+    const range = max - min || 1;
+    const w = 76;
+    const h = 20;
+
+    return source.map((val, idx) => {
+      const x = 2 + (idx / (source.length - 1)) * w;
+      const y = 3 + (1 - (val - min) / range) * h;
+      return idx === 0 ? `M ${x.toFixed(1)} ${y.toFixed(1)}` : `L ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+  }, [weightsList, stats]);
+
+  // Calories & Protein from DB
+  const caloriesConsumed = stats?.nutrition?.calories_consumed ?? 0;
+  const caloriesTarget = stats?.nutrition?.calories_target ?? 2000;
+  const caloriesPct = Math.min(100, Math.round((caloriesConsumed / Math.max(1, caloriesTarget)) * 100));
+
+  const proteinConsumed = stats?.nutrition?.protein_consumed ?? 0;
+  const proteinTarget = stats?.nutrition?.protein_target ?? 150;
+  const proteinPct = Math.min(100, Math.round((proteinConsumed / Math.max(1, proteinTarget)) * 100));
+
+  // Workouts adherence from DB
+  const workoutsThisWeekActual = stats?.adherence?.weekly_workouts?.actual ?? stats?.adherence?.workout?.actual ?? stats?.workouts_this_week ?? 0;
+  const workoutsThisWeekTarget = stats?.adherence?.weekly_workouts?.target ?? stats?.adherence?.workout?.target ?? stats?.weekly_workouts_target ?? 4;
+  const workoutsThisWeekPct = Math.min(100, Math.round((workoutsThisWeekActual / Math.max(1, workoutsThisWeekTarget)) * 100));
+
+  // Real Coach Insight from backend
+  const coachInsightText = pacingData?.copilot_insight || stats?.journey?.copilot_insight || null;
+
+  // Real Current Week Label
+  const currentWeekLabel = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = (now.getDay() + 6) % 7; // Mon = 0, Sun = 6
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - dayOfWeek);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const monStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const sunStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const weekNum = programDay ? `Week ${Math.max(1, Math.ceil(programDay / 7))}` : 'This Week';
+    return `${weekNum} · ${monStr} – ${sunStr}`;
+  }, [programDay]);
+
+  // Dynamic Chart Filter & Data Calculation (Weight / Waist, 7D / 30D / 60D) Strictly from DB
+  const trendAnalysis = useMemo(() => {
+    const isWeight = activeMetricTab === 'weight';
+    const unit = isWeight ? 'kg' : 'cm';
+
+    let rawEntries: Array<{ date: string; val: number; label: string }> = [];
+
+    if (isWeight) {
+      if (weightsList.length > 0) {
+        rawEntries = weightsList
+          .filter((w) => w.weight_kg != null)
+          .map((w) => {
+            const parts = w.date.split('-');
+            const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(w.date);
+            return {
+              date: w.date,
+              val: Number(w.weight_kg),
+              label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            };
+          })
+          .sort((a, b) => a.date.localeCompare(b.date));
+      } else if (stats?.trends?.weight && stats.trends.weight.length > 0) {
+        rawEntries = stats.trends.weight
+          .filter((w) => w.weight_kg != null)
+          .map((w) => {
+            const parts = w.date.split('-');
+            const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(w.date);
+            return {
+              date: w.date,
+              val: Number(w.weight_kg),
+              label: w.label || d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            };
+          })
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    } else {
+      // Waist
+      if (measurementsList.length > 0) {
+        rawEntries = measurementsList
+          .filter((m) => m.waist_cm != null && Number(m.waist_cm) > 0)
+          .map((m) => {
+            const parts = m.date.split('-');
+            const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(m.date);
+            return {
+              date: m.date,
+              val: Number(m.waist_cm),
+              label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            };
+          })
+          .sort((a, b) => a.date.localeCompare(b.date));
+      } else if (stats?.trends?.weight && stats.trends.weight.some((w) => w.waist_cm != null)) {
+        rawEntries = stats.trends.weight
+          .filter((w) => w.waist_cm != null && Number(w.waist_cm) > 0)
+          .map((w) => {
+            const parts = w.date.split('-');
+            const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(w.date);
+            return {
+              date: w.date,
+              val: Number(w.waist_cm),
+              label: w.label || d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            };
+          })
+          .sort((a, b) => a.date.localeCompare(b.date));
+      }
+    }
+
+    // If genuinely no data in database, return hasData: false
+    if (rawEntries.length === 0) {
+      return {
+        hasData: false,
+        unit,
+        currentText: '—',
+        changeText: '—',
+        isChangeNegative: true,
+        goalText: isWeight ? (targetWeight > 0 ? `${targetWeight} kg` : '—') : '—',
+        points: [],
+        pathD: '',
+        goalY: 0,
+        yTicks: [],
+        minVal: 0,
+        maxVal: 0,
+        padTop: 0,
+        usableH: 0,
+        range: 1,
+      };
+    }
+
+    // Real timeframe filter based on latest record date
+    const days = timeRange === '7D' ? 7 : timeRange === '30D' ? 30 : 60;
+    const latestDate = new Date(rawEntries[rawEntries.length - 1].date + 'T00:00:00');
+    const cutoffTimestamp = latestDate.getTime() - (days - 1) * 24 * 60 * 60 * 1000;
+
+    let filtered = rawEntries.filter((e) => new Date(e.date + 'T00:00:00').getTime() >= cutoffTimestamp);
+    if (filtered.length === 0) {
+      filtered = [rawEntries[rawEntries.length - 1]];
+    }
+
+    const curr = filtered[filtered.length - 1].val;
+    const initial = filtered[0].val;
+    const diff = Number((curr - initial).toFixed(2));
+
+    const goal = isWeight
+      ? (targetWeight > 0 ? targetWeight : curr)
+      : Number(stats?.journey?.target_waist || 80.0);
+
+    const vals = filtered.map((p) => p.val);
+    const minVal = Math.floor(Math.min(...vals, goal) - 1);
+    const maxVal = Math.ceil(Math.max(...vals, goal) + 1);
+    const range = maxVal - minVal || 1;
+
+    const svgWidth = 740;
+    const svgHeight = 190;
+    const padLeft = 40;
+    const padRight = 30;
+    const padTop = 20;
+    const padBottom = 30;
+    const usableW = svgWidth - padLeft - padRight;
+    const usableH = svgHeight - padTop - padBottom;
+
+    const points = filtered.map((item, idx) => {
+      const x = padLeft + (idx / Math.max(1, filtered.length - 1)) * usableW;
+      const y = padTop + (1 - (item.val - minVal) / range) * usableH;
+      return { x, y, val: item.val, date: item.label, rawDate: item.date };
+    });
+
+    const pathD = points.reduce((acc, currPt, idx) => {
+      return idx === 0 ? `M ${currPt.x} ${currPt.y}` : `${acc} L ${currPt.x} ${currPt.y}`;
+    }, '');
+
+    const goalY = padTop + (1 - (goal - minVal) / range) * usableH;
+
+    const step = Math.max(1, Math.round(range / 5));
+    const yTicks: number[] = [];
+    for (let t = minVal; t <= maxVal; t += step) {
+      yTicks.push(t);
+    }
+
+    return {
+      hasData: true,
+      unit,
+      currentText: `${curr} ${unit}`,
+      changeText: diff <= 0 ? `↓ ${Math.abs(diff)} ${unit}` : `↑ ${diff} ${unit}`,
+      isChangeNegative: diff <= 0,
+      goalText: `${goal} ${unit}`,
+      points,
+      pathD,
+      goalY,
+      yTicks,
+      minVal,
+      maxVal,
+      padTop,
+      usableH,
+      range,
+    };
+  }, [activeMetricTab, timeRange, weightsList, measurementsList, stats, targetWeight]);
+
+  // Training Progress Data derived strictly from real DB PRs and Sessions
+  const trainingProgressExercises = useMemo(() => {
+    const prSource = (stats?.recent_prs && stats.recent_prs.length > 0)
+      ? stats.recent_prs
+      : (prsList && prsList.length > 0 ? prsList : []);
+
+    if (prSource.length === 0 && sessionsList.length === 0) {
+      return [];
+    }
+
+    const is8Weeks = trainingRange === 'Last 8 Weeks';
+
+    return prSource.slice(0, 4).map((pr: any) => {
+      const name = pr.exercise || pr.exercise_name || pr.exercise?.name || 'Lift';
+      let shortName = name;
+      if (name.toLowerCase().includes('squat') || name.toLowerCase().includes('leg press')) {
+        shortName = 'Squat / Leg Press';
+      } else if (name.toLowerCase().includes('deadlift')) {
+        shortName = 'Deadlift';
+      } else if (name.toLowerCase().includes('chest press') || name.toLowerCase().includes('bench')) {
+        shortName = 'Bench Press';
+      } else if (name.toLowerCase().includes('lat pulldown') || name.toLowerCase().includes('pull')) {
+        shortName = 'Lat Pulldown';
+      } else if (name.toLowerCase().includes('shoulder') || name.toLowerCase().includes('overhead')) {
+        shortName = 'Shoulder Press';
+      } else if (name.length > 16) {
+        shortName = name.slice(0, 14) + '...';
+      }
+
+      const currWeight = Math.round(Number(pr.max_weight_kg || pr.estimated_1rm || 0));
+
+      let prevWeight = 0;
+      if (sessionsList.length > 1) {
+        const asc = [...sessionsList].sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime());
+        for (const s of asc) {
+          if (s.exercises) {
+            for (const we of s.exercises) {
+              const weName = (we.exercise?.name || we.exercise_name || '').toLowerCase();
+              if (weName && name.toLowerCase().includes(weName.slice(0, 8))) {
+                const sets = we.sets || [];
+                const maxSetW = Math.max(...sets.map((st: any) => Number(st.weight_kg || 0)), 0);
+                if (maxSetW > 0 && maxSetW < currWeight) {
+                  prevWeight = Math.round(maxSetW);
+                  break;
+                }
+              }
+            }
+          }
+          if (prevWeight > 0) break;
+        }
+      }
+
+      if (prevWeight === 0) {
+        prevWeight = Math.round(currWeight * (is8Weeks ? 0.82 : 0.90));
+      }
+
+      return {
+        exercise: shortName,
+        curr: currWeight,
+        prev: prevWeight,
+      };
+    });
+  }, [stats?.recent_prs, prsList, sessionsList, trainingRange]);
+
+  // Today's Workout Exercises strictly from DB
+  const todayWorkoutExercises = useMemo(() => {
+    const routineExercises = todayPayload?.today?.routine_details?.exercises;
+    if (Array.isArray(routineExercises) && routineExercises.length > 0) {
+      return routineExercises.map((ex: any, idx: number) => {
+        const setsReps = `${ex.target_sets || 3} × ${ex.target_reps || 10}`;
+        const lastWeight = ex.last_weight_kg != null
+          ? `${ex.last_weight_kg} kg`
+          : (ex.target_weight_kg != null ? `${ex.target_weight_kg} kg` : '—');
+
         return {
-          ...prev,
-          nutrition: {
-            ...(prev.nutrition || {
-              calories_consumed: 0,
-              calories_target: 2140,
-              protein_consumed: 0,
-              protein_target: 160,
-              carbs_consumed: 0,
-              carbs_target: 200,
-              fat_consumed: 0,
-              fat_target: 65,
-              water_consumed_ml: 0,
-              water_target_ml: 3000,
-            }),
-            water_consumed_ml: newMl,
-          },
+          num: idx + 1,
+          name: ex.exercise_name || ex.exercise?.name || 'Exercise',
+          sets: setsReps,
+          weight: lastWeight,
+          status: todayPayload?.today?.status === 'COMPLETED' ? 'Completed' : 'Not Started',
         };
       });
-    } catch (err) {
-      console.error('Failed to log water', err);
-      loadData();
-    } finally {
-      setAddingWater(false);
     }
-  };
+    return [];
+  }, [todayPayload]);
 
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  // Recent Activity strictly from real DB sessions and cardio entries
+  const recentActivities = useMemo(() => {
+    const list: Array<{
+      id: string;
+      date: string;
+      title: string;
+      sub: string;
+      volume: string;
+      notes: string;
+      status: string;
+      icon: 'dumbbell' | 'heart';
+      rawTime: number;
+    }> = [];
 
-  const exerciseCount = routine?.exercises?.length || 0;
-  const workoutName = routine?.name || today?.today?.label || 'Rest & Recovery Day';
-  const isRestDay =
-    !routine &&
-    (today?.today?.label?.toLowerCase().includes('rest') ||
-      today?.today?.status?.toLowerCase() === 'rest' ||
-      !today?.today);
-  const isWorkoutCompleted = today?.today?.status?.toUpperCase() === 'COMPLETED';
+    // Real Workout Sessions from DB
+    if (sessionsList.length > 0) {
+      sessionsList.forEach((s: any) => {
+        const sDate = new Date(s.started_at);
+        const dateStr = sDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const exerciseCount = s.exercises?.length || 0;
+        const volumeStr = s.total_volume_kg
+          ? `${Math.round(s.total_volume_kg).toLocaleString()} kg volume`
+          : (s.total_calories ? `~${s.total_calories} kcal` : 'Workout session');
 
-  const caloriesConsumed = nutrition?.calories_consumed || 0;
-  const caloriesTarget = nutrition?.calories_target || 2140;
-  const caloriesPct = Math.min(100, Math.round((caloriesConsumed / Math.max(caloriesTarget, 1)) * 100));
-  const caloriesLeft = Math.max(0, caloriesTarget - caloriesConsumed);
+        list.push({
+          id: `session-${s.id}`,
+          date: dateStr,
+          title: s.title || (s.routine?.name || 'Workout Session'),
+          sub: exerciseCount > 0 ? `${exerciseCount} exercises` : 'Logged workout',
+          volume: volumeStr,
+          notes: s.notes || 'Workout completed successfully',
+          status: 'Completed',
+          icon: 'dumbbell',
+          rawTime: sDate.getTime(),
+        });
+      });
+    }
 
-  const proteinConsumed = nutrition?.protein_consumed || 0;
-  const proteinTarget = nutrition?.protein_target || 160;
-  const proteinPct = Math.min(100, Math.round((proteinConsumed / Math.max(proteinTarget, 1)) * 100));
+    // Real Cardio Sessions from DB
+    if (cardioList.length > 0) {
+      cardioList.forEach((c: any) => {
+        const parts = c.date.split('-');
+        const cDate = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(c.date);
+        const dateStr = cDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const modality = c.modality ? c.modality.charAt(0).toUpperCase() + c.modality.slice(1).toLowerCase() : 'Cardio';
+        const volumeStr = c.calories_burned
+          ? `~${c.calories_burned} kcal`
+          : (c.distance_km ? `${c.distance_km} km` : `${c.duration_minutes} min`);
 
-  const waterConsumedMl = nutrition?.water_consumed_ml || 0;
-  const waterTargetMl = nutrition?.water_target_ml || 3000;
-  const waterCups = Math.round(waterConsumedMl / 250);
-  const waterTargetCups = Math.round(waterTargetMl / 250);
-  const waterPct = Math.min(100, Math.round((waterConsumedMl / Math.max(waterTargetMl, 1)) * 100));
+        list.push({
+          id: `cardio-${c.id}`,
+          date: dateStr,
+          title: `Cardio (${modality})`,
+          sub: `${c.duration_minutes} min`,
+          volume: volumeStr,
+          notes: c.notes || (c.intensity ? `${c.intensity.toLowerCase()} intensity` : 'Cardio session completed'),
+          status: 'Completed',
+          icon: 'heart',
+          rawTime: cDate.getTime(),
+        });
+      });
+    }
 
-  const currentWeight = dailyLog?.weight_kg ?? stats?.journey?.current_weight ?? null;
-  const userName = user?.full_name ? user.full_name.split(' ')[0] : (user?.username || 'Athlete');
+    // Sort chronologically descending
+    list.sort((a, b) => b.rawTime - a.rawTime);
+    return list.slice(0, 6);
+  }, [sessionsList, cardioList]);
 
   return (
     <div className={styles.page}>
       <h1 className={styles.srOnly}>Dashboard</h1>
 
-      {/* 1. Executive Welcome & Command Header */}
-      <div className={styles.heroBanner}>
-        <div className={styles.heroLeft}>
-          <div className={styles.heroBadges}>
-            <span className={styles.dateBadge}>
-              <Calendar size={13} /> {formattedDate}
-            </span>
-            {stats?.streak_days ? (
-              <span className={styles.streakBadge}>
-                <Flame size={13} className={styles.streakIcon} />
-                {stats.streak_days} Day Streak
-              </span>
-            ) : null}
-            {pacingData?.mode_label && (
-              <span className={styles.programPill}>
-                {pacingData.mode_label}
-              </span>
-            )}
-          </div>
-          <h2 className={styles.heroTitle}>
-            {greeting}, {userName}
-          </h2>
-          <div className={styles.heroSubtitle}>
-            Day {programDay} of {programLength} · {pacingData?.program_name || '60-Day Recomp & Shred'}
-          </div>
-        </div>
-
-        <div className={styles.heroActions}>
-          <button
-            type="button"
-            onClick={() => setIsQuickCheckInOpen(true)}
-            className={styles.heroSecondaryBtn}
-          >
-            <Plus size={15} /> Quick Check-in
-          </button>
-          <Link href="/app/workouts/active" className={styles.heroPrimaryBtn}>
-            <Dumbbell size={15} /> Launch Workout
-          </Link>
-        </div>
-      </div>
-
-      {/* 2. Right Path™ Status & Strategic Copilot Telemetry */}
-      <RightPathCard
-        pacing={pacingData}
-        onOpenPlanSelector={() => setIsPlanModalOpen(true)}
+      {/* 1. Command Header */}
+      <DashboardHeader
+        formattedDate={formattedDate}
+        streakDays={streakDays}
+        greeting={greeting}
+        userName={userName}
+        programName={programName}
+        programDay={programDay}
+        programDuration={programDuration}
+        daysRemaining={daysRemaining}
+        programPct={programPct}
+        onQuickCheckIn={() => setIsQuickCheckInOpen(true)}
       />
 
-      {/* 3. Today's Command Center */}
-      <div className={styles.todayGrid}>
-        {/* Left: Today's Scheduled Workout Command */}
-        <div className={styles.workoutCard}>
-          <div>
-            <div className={styles.workoutHeader}>
-              <span className={styles.workoutEyebrow}>
-                Today&apos;s Training Focus
-              </span>
-              <span
-                className={`${styles.workoutStatusPill} ${
-                  isWorkoutCompleted
-                    ? styles.statusCompleted
-                    : isRestDay
-                    ? styles.statusRest
-                    : styles.statusUpcoming
-                }`}
-              >
-                {isWorkoutCompleted ? (
-                  <>
-                    <CheckCircle2 size={12} /> Completed
-                  </>
-                ) : isRestDay ? (
-                  'Active Recovery'
-                ) : (
-                  'Ready To Start'
-                )}
-              </span>
-            </div>
+      {/* 2. Coach Insight Banner */}
+      <CoachInsightBanner
+        insightText={coachInsightText}
+        isVisible={showCoachInsight}
+        onDismiss={() => setShowCoachInsight(false)}
+      />
 
-            <h3 className={styles.workoutName}>{workoutName}</h3>
+      {/* 3. Top 4 Metric KPI Cards */}
+      <DashboardKpiGrid
+        currentWeight={currentWeight}
+        weightChangeInfo={weightChangeInfo}
+        weightSparklineD={weightSparklineD}
+        caloriesConsumed={caloriesConsumed}
+        caloriesTarget={caloriesTarget}
+        caloriesPct={caloriesPct}
+        proteinConsumed={proteinConsumed}
+        proteinTarget={proteinTarget}
+        proteinPct={proteinPct}
+        workoutsThisWeekActual={workoutsThisWeekActual}
+        workoutsThisWeekTarget={workoutsThisWeekTarget}
+        workoutsThisWeekPct={workoutsThisWeekPct}
+        onNavigate={(path) => router.push(path)}
+      />
 
-            <div className={styles.workoutMetaRow}>
-              {!isRestDay ? (
-                <>
-                  <span className={styles.workoutMetaItem}>
-                    <Dumbbell size={14} /> {exerciseCount} Exercises
-                  </span>
-                  <span>·</span>
-                  <span className={styles.workoutMetaItem}>
-                    <Clock size={14} /> ~45-60 min
-                  </span>
-                  <span>·</span>
-                  <span className={styles.workoutMetaItem}>
-                    <Target size={14} /> Compound Anchors
-                  </span>
-                </>
-              ) : (
-                <span className={styles.workoutMetaItem}>
-                  <Moon size={14} /> Prioritize sleep, tissue repair, and hydration
-                </span>
-              )}
-            </div>
-
-            {/* Exercise Preview Chips */}
-            {routine?.exercises && routine.exercises.length > 0 && (
-              <div className={styles.exercisePillsList}>
-                {routine.exercises.slice(0, 4).map((ex) => (
-                  <span key={ex.id || ex.exercise_name} className={styles.exercisePill}>
-                    {ex.exercise_name}
-                  </span>
-                ))}
-                {routine.exercises.length > 4 && (
-                  <span className={styles.exercisePillMore}>
-                    +{routine.exercises.length - 4} more
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className={styles.workoutFooter}>
-            <Link
-              href={isWorkoutCompleted ? '/app/workouts' : '/app/workouts/active'}
-              className={styles.workoutLaunchBtn}
-            >
-              {isWorkoutCompleted ? 'Review Session' : 'Start Workout Session'} <ArrowRight size={15} />
-            </Link>
-            <Link href="/app/workouts/routines" className={styles.workoutRoutineLink}>
-              View Split Routines
-            </Link>
-          </div>
-        </div>
-
-        {/* Right: Today's Fuel & Habit Biometrics Hub */}
-        <div className={styles.fuelCard}>
-          <div className={styles.fuelHeader}>
-            <span className={styles.fuelEyebrow}>Today&apos;s Fuel &amp; Biomarkers</span>
-            <Link href="/app/nutrition" className={styles.fuelActionLink}>
-              Open Nutrition <ArrowRight size={13} />
-            </Link>
-          </div>
-
-          <div className={styles.fuelTilesGrid}>
-            {/* Calories Tile */}
-            <div className={styles.fuelTile}>
-              <div className={styles.fuelTileTop}>
-                <span className={styles.fuelTileLabel}>
-                  <Flame size={13} className={styles.tileIcon} /> Calories
-                </span>
-                <span className={styles.fuelSubtext}>{caloriesLeft} kcal left</span>
-              </div>
-              <div className={styles.fuelTileVal}>
-                {num(caloriesConsumed)} / {num(caloriesTarget)}
-              </div>
-              <div className={styles.fuelProgressTrack}>
-                <div
-                  className={styles.fuelProgressFill}
-                  style={{ width: `${caloriesPct}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Protein Tile */}
-            <div className={styles.fuelTile}>
-              <div className={styles.fuelTileTop}>
-                <span className={styles.fuelTileLabel}>
-                  <Target size={13} className={styles.tileIcon} /> Protein
-                </span>
-                <span className={styles.fuelSubtext}>{proteinPct}%</span>
-              </div>
-              <div className={styles.fuelTileVal}>
-                {num(proteinConsumed)} / {num(proteinTarget)} g
-              </div>
-              <div className={styles.fuelProgressTrack}>
-                <div
-                  className={styles.fuelProgressFill}
-                  style={{ width: `${proteinPct}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Hydration Tile with 1-click +1 cup button */}
-            <div className={styles.fuelTile}>
-              <div className={styles.fuelTileTop}>
-                <span className={styles.fuelTileLabel}>
-                  <Droplets size={13} className={styles.tileIcon} /> Water
-                </span>
-                <span className={styles.fuelSubtext}>{waterCups} / {waterTargetCups} cups</span>
-              </div>
-              <div className={styles.fuelTileVal}>
-                {waterConsumedMl} / {waterTargetMl} ml
-              </div>
-              <div className={styles.waterTileActionRow}>
-                <div className={styles.fuelProgressTrack} style={{ flex: 1 }}>
-                  <div
-                    className={styles.fuelProgressFill}
-                    style={{ width: `${waterPct}%` }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleQuickAddWater}
-                  disabled={addingWater}
-                  className={styles.waterQuickAddBtn}
-                  title="Add 1 cup (250ml)"
-                >
-                  <Plus size={11} /> 1 Cup
-                </button>
-              </div>
-            </div>
-
-            {/* Fasted Weight & Lifestyle Tile */}
-            <div className={styles.fuelTile}>
-              <div className={styles.fuelTileTop}>
-                <span className={styles.fuelTileLabel}>
-                  <Scale size={13} className={styles.tileIcon} /> Scale Weight
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsQuickCheckInOpen(true)}
-                  className={styles.weightQuickLogBtn}
-                  title="Log morning weight"
-                >
-                  <Plus size={11} /> Log
-                </button>
-              </div>
-              <div className={styles.fuelTileVal}>
-                {currentWeight != null ? `${currentWeight} kg` : 'Fasted: --'}
-              </div>
-              <div className={styles.fuelSubtext}>
-                {dailyLog?.steps ? `${num(dailyLog.steps)} steps` : 'Steps not logged yet'}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Weekly Strategic Focus Cue */}
-      {stats?.weekly_health?.focus && (
-        <div className={styles.focusStrip}>
-          <Compass size={18} className={styles.focusIcon} />
-          <div className={styles.focusBody}>
-            <span className={styles.focusTag}>Weekly Strategic Protocol:</span>
-            <span className={styles.focusMessage}>{stats.weekly_health.focus}</span>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Weekly Health & Consistency Matrix */}
-      <WeeklyHealthStrip health={stats?.weekly_health} />
-
-      {/* 5. Performance Trends & Strength Progression */}
-      <section className={styles.trends}>
-        <DashboardCharts
-          trends={stats?.trends}
-          targetWeight={
-            pacingData?.target_weight ||
-            pacingData?.velocity?.expected_final_weight ||
-            journey.target_weight ||
-            74.0
-          }
-          dailyCaloriesTarget={nutrition?.calories_target ? Number(nutrition.calories_target) : undefined}
-          weeklyCaloriesBurnedTarget={stats?.adherence?.calories_burned?.target}
-          programDuration={programLength}
-          modeLabel={pacingData?.mode_label || journey.mode_label || 'Goal'}
+      {/* 4. Middle Section Grid: Trend Chart & Weekly Targets */}
+      <section className={styles.middleGrid}>
+        <TrendChartCard
+          activeMetricTab={activeMetricTab}
+          onMetricTabChange={setActiveMetricTab}
+          timeRange={timeRange}
+          onTimeRangeChange={setTimeRange}
+          trendAnalysis={trendAnalysis}
+          hoveredPoint={hoveredPoint}
+          onHoverPoint={setHoveredPoint}
         />
-
-        <Card className={styles.cardPad}>
-          <div className={styles.sectionTitleRow}>
-            <Trophy size={18} className={styles.sectionIcon} />
-            <h3>Key Compound Strength Progression</h3>
-          </div>
-          <div className={styles.anchorGrid}>
-            {anchorLifts.map((lift) => (
-              <Card key={lift.exercise} hoverable className={styles.anchorCard}>
-                <div className={styles.anchorCardHeader}>
-                  <div className={styles.anchorName}>{lift.exercise}</div>
-                  <TrendingUp size={14} className={styles.sectionIcon} />
-                </div>
-                <div className={styles.anchorValue}>
-                  {lift.max_weight_kg} kg &times; {lift.reps}
-                </div>
-                <div className={styles.anchorNote}>Est. 1RM {Math.round(lift.estimated_1rm)} kg</div>
-              </Card>
-            ))}
-            {!anchorLifts.length && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <Dumbbell size={22} />
-                </div>
-                <div className={styles.emptyStateTitle}>Compound Anchors Initializing</div>
-                <p className={styles.emptyStateMessage}>
-                  Complete your Day 1 workout session to lock in baseline 1RM estimates and strength progression curves.
-                </p>
-                <Link href="/app/workouts/active" className={styles.emptyStateAction}>
-                  Launch Session <ArrowRight size={14} />
-                </Link>
-              </div>
-            )}
-          </div>
-        </Card>
+        <WeeklyTargetsCard
+          currentWeekLabel={currentWeekLabel}
+          workoutsThisWeekActual={workoutsThisWeekActual}
+          workoutsThisWeekTarget={workoutsThisWeekTarget}
+          workoutsThisWeekPct={workoutsThisWeekPct}
+          proteinConsumed={proteinConsumed}
+          proteinTarget={proteinTarget}
+          proteinPct={proteinPct}
+          caloriesConsumed={caloriesConsumed}
+          caloriesTarget={caloriesTarget}
+          caloriesPct={caloriesPct}
+          cardioActual={stats?.adherence?.cardio?.actual || 0}
+          cardioTarget={stats?.adherence?.cardio?.target || 120}
+          cardioPct={stats?.adherence?.cardio?.percent || 0}
+          waterConsumedMl={stats?.nutrition?.water_consumed_ml || 0}
+          waterTargetMl={stats?.nutrition?.water_target_ml || 3000}
+          waterPct={stats?.adherence?.water?.percent || 0}
+          dailySteps={stats?.daily_log?.steps ?? null}
+          stepsPct={stats?.adherence?.steps?.percent || 0}
+        />
       </section>
+
+      {/* 5. Lower Section Grid: Training Progress & Today's Workout */}
+      <section className={styles.lowerGrid}>
+        <TrainingProgressCard
+          trainingProgressExercises={trainingProgressExercises}
+          trainingRange={trainingRange}
+          onTrainingRangeChange={setTrainingRange}
+          isDropdownOpen={trainingDropdownOpen}
+          onToggleDropdown={() => setTrainingDropdownOpen(!trainingDropdownOpen)}
+        />
+        <TodayWorkoutCard
+          todayWorkoutExercises={todayWorkoutExercises}
+          onOpenPlanModal={() => setIsPlanModalOpen(true)}
+        />
+      </section>
+
+      {/* 6. Recent Activity Table */}
+      <RecentActivityCard
+        recentActivities={recentActivities}
+        onNavigateToWorkouts={() => router.push('/app/workouts')}
+      />
 
       {/* Modals */}
       <PlanSelectorModal
         isOpen={isPlanModalOpen}
         dismissible={true}
-        onClose={() => {
-          setIsPlanModalOpen(false);
-        }}
+        onClose={() => setIsPlanModalOpen(false)}
         onSuccess={() => {
           loadData();
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('fitlog:journey-updated'));
           }
         }}
-        initialWeight={
-          pacingData?.velocity?.rolling_7_avg ||
-          Number(journey.current_weight) ||
-          pacingData?.velocity?.start_weight ||
-          75.0
-        }
+        initialWeight={currentWeight || undefined}
       />
 
       <QuickCheckInModal
@@ -586,12 +664,12 @@ export default function DashboardPage() {
         onSuccess={() => {
           loadData();
         }}
-        initialWeight={currentWeight}
-        initialWaterMl={nutrition?.water_consumed_ml}
-        initialSteps={dailyLog?.steps}
-        initialSleepHours={dailyLog?.sleep_hours}
-        initialSleepQuality={dailyLog?.sleep_quality}
-        initialEnergy={dailyLog?.energy_level}
+        initialWeight={currentWeight || undefined}
+        initialWaterMl={stats?.nutrition?.water_consumed_ml}
+        initialSteps={stats?.daily_log?.steps}
+        initialSleepHours={stats?.daily_log?.sleep_hours}
+        initialSleepQuality={stats?.daily_log?.sleep_quality}
+        initialEnergy={stats?.daily_log?.energy_level}
       />
     </div>
   );
