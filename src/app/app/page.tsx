@@ -480,6 +480,69 @@ export default function DashboardPage() {
     return [];
   }, [todayPayload]);
 
+  const todayDateStr = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
+
+  const todaySession = useMemo(() => {
+    return sessionsList.find((s: any) => s.started_at && s.started_at.startsWith(todayDateStr)) || null;
+  }, [sessionsList, todayDateStr]);
+
+  const todayCalendarDay = stats?.calendar_days?.[todayDateStr];
+
+  const isTodayWorkoutDone = Boolean(
+    todayPayload?.today?.status === 'COMPLETED' ||
+    todayCalendarDay?.has_workout ||
+    todayCalendarDay?.status === 'COMPLETED' ||
+    todaySession
+  );
+
+  const completedWorkoutData = useMemo(() => {
+    if (!isTodayWorkoutDone) return null;
+    const title =
+      todaySession?.title ||
+      todayPayload?.today?.completed_session_title ||
+      todayCalendarDay?.workout_title ||
+      todayPayload?.today?.routine_details?.name ||
+      todayPayload?.today?.label ||
+      'Workout Session';
+
+    const volumeKg =
+      todayPayload?.today?.completed_volume_kg ??
+      todayCalendarDay?.volume_kg ??
+      (todaySession?.total_volume_kg != null ? Math.round(todaySession.total_volume_kg) : 0);
+
+    const durationMin =
+      todayPayload?.today?.completed_duration_seconds != null
+        ? Math.round(todayPayload.today.completed_duration_seconds / 60)
+        : (todayCalendarDay?.duration_min ?? (todaySession?.duration_seconds ? Math.round(todaySession.duration_seconds / 60) : 0));
+
+    const exercisesCount =
+      todayPayload?.today?.completed_exercise_count ??
+      todayCalendarDay?.exercises_count ??
+      (todaySession?.exercises?.length || todayWorkoutExercises.length || 0);
+
+    const sessionId =
+      todaySession?.id ||
+      todayPayload?.today?.completed_session_id ||
+      todayCalendarDay?.session_id ||
+      null;
+
+    return {
+      title,
+      volumeKg,
+      durationMin,
+      exercisesCount,
+      sessionId,
+    };
+  }, [isTodayWorkoutDone, todaySession, todayPayload, todayCalendarDay, todayWorkoutExercises]);
+
+  const todayRoutineName = todayPayload?.today?.routine_details?.name || todayPayload?.today?.label || undefined;
+
   // Recent Activity strictly from real DB sessions and cardio entries
   const recentActivities = useMemo(() => {
     const list: Array<{
@@ -635,6 +698,9 @@ export default function DashboardPage() {
         <TodayWorkoutCard
           todayWorkoutExercises={todayWorkoutExercises}
           onOpenPlanModal={() => setIsPlanModalOpen(true)}
+          isWorkoutDone={isTodayWorkoutDone}
+          completedWorkout={completedWorkoutData}
+          routineName={todayRoutineName}
         />
       </section>
 

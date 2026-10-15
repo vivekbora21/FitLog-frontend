@@ -235,6 +235,14 @@ class ApiClient {
     return this.request<any>('/workouts/sessions/plan/');
   }
 
+  async extendPlan() {
+    return this.request<any>('/workouts/sessions/extend-plan/', { method: 'POST', body: JSON.stringify({}) });
+  }
+
+  async declinePlanExtension() {
+    return this.request<any>('/workouts/sessions/decline-plan-extension/', { method: 'POST', body: JSON.stringify({}) });
+  }
+
   async getCardio() {
     return this.request<any>('/workouts/cardio/');
   }
