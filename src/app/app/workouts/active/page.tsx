@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus, Trash2, Check, Trophy, X, Dumbbell, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Check, Trophy, X, Dumbbell, Sparkles, ArrowRight, CheckCircle2, Clock, Calendar } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Exercise, ProgressionRecommendation, Routine, RoutineExerciseSwap } from '@/lib/types';
 import { Card } from '@/components/ui/Card';
@@ -79,6 +79,8 @@ function ActiveWorkoutLoggerInner() {
   const [title, setTitle] = useState('Active Workout Session');
   const [exercises, setExercises] = useState<ActiveExercise[]>([]);
   const [routineExercises, setRoutineExercises] = useState<RoutineExercisePayload[]>([]);
+  const [completedSession, setCompletedSession] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   const startTimeRef = useRef<number>(Date.now());
   // Stable for the lifetime of this page so a retried "finish workout" submission
   // (double-click, request timeout + retry) is recognized by the backend as the same
@@ -94,19 +96,41 @@ function ActiveWorkoutLoggerInner() {
   const [saving, setSaving] = useState(false);
   const [activeRoutineId, setActiveRoutineId] = useState<string | null>(routineId);
 
-  // Load routine details if available, but do NOT auto-populate active exercises.
-  // Exercises are only shown after the user adds them.
+  // Load routine details or completed workout for today
   useEffect(() => {
-    const handleRoutine = (routine: RoutinePayload) => {
+    const handleRoutine = (routine: RoutinePayload, workoutPayload?: any) => {
       if (routine.name) setTitle(routine.name);
       setActiveRoutineId(routine.id || routineId || null);
-      if (routine.exercises && routine.exercises.length > 0) {
-        setRoutineExercises(routine.exercises);
+      let exList = routine.exercises && routine.exercises.length > 0 ? routine.exercises : [];
+      if (exList.length === 0 && workoutPayload) {
+        const rawList = Array.isArray(workoutPayload) ? workoutPayload : workoutPayload.exercises;
+        if (Array.isArray(rawList)) {
+          exList = rawList.map((item: any, idx: number) => ({
+            id: item.id || `payload-${idx}`,
+            exercise: item.exercise || '',
+            exercise_name: item.exercise_name || item.name || `Exercise ${idx + 1}`,
+            target_sets: Number(item.sets || item.target_sets || 3),
+            target_reps: String(item.reps || item.target_reps || '8-12'),
+            rest_seconds: Number(item.rest_seconds || 90),
+            primary_muscle: item.primary_muscle || '',
+            target_rpe: item.rpe,
+            suggested_weight_kg: item.suggested_weight_kg,
+            notes: item.notes || item.progression_rule || '',
+          }));
+        }
+      }
+      if (exList.length > 0) {
+        setRoutineExercises(exList);
+        // Automatically populate exercises so the user sees today's movements loaded ready to log
+        setExercises((prev) => (prev.length === 0 ? exList.map(toActiveExercise) : prev));
       }
     };
 
     const loadWorkout = async () => {
+      setLoading(true);
       try {
+        const isForceNew = searchParams.get('new') === '1';
+
         if (routineId) {
           const routines = await api.getRoutines();
           const list = routines.results || routines;
@@ -114,18 +138,32 @@ function ActiveWorkoutLoggerInner() {
           if (found) handleRoutine(found);
           return;
         }
+
         const current = await api.getTodaysWorkout();
+
+        // If today's workout has already been completed, and user is not explicitly starting a new session:
+        if (!isForceNew && (current?.today?.status === 'COMPLETED' || current?.today?.completed_session)) {
+          if (current.today.completed_session) {
+            setCompletedSession(current.today.completed_session);
+            setTitle(current.today.completed_session.title || 'Workout Session');
+            return;
+          }
+        }
+
         const routine = current?.today?.routine_details;
-        if (routine) {
-          handleRoutine(routine);
+        const workoutPayload = current?.today?.workout_payload;
+        if (routine || workoutPayload) {
+          handleRoutine(routine || { name: current?.today?.label || 'Guided Workout' }, workoutPayload);
         }
       } catch (error) {
         console.error('Failed to load active workout', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadWorkout();
-  }, [routineId]);
+  }, [routineId, searchParams]);
 
   // Add exercise from the full catalog modal
   const addExercise = (ex: Exercise) => {
@@ -323,6 +361,244 @@ function ActiveWorkoutLoggerInner() {
   const unaddedRoutineExercises = routineExercises.filter(
     (re) => !exercises.some((e) => e.exerciseId === effectiveExercise(re).id)
   );
+
+  if (loading) {
+    return (
+      <div className={styles.loadingFallback}>
+        <div className="skeleton" style={{ width: '40%', height: 28, margin: '0 auto 1rem auto' }} />
+        <div className="skeleton" style={{ width: '100%', height: 180, borderRadius: 12 }} />
+      </div>
+    );
+  }
+
+  if (completedSession) {
+    const startedDate = completedSession.started_at ? new Date(completedSession.started_at) : null;
+    const totalCompletedSets = completedSession.exercises?.reduce(
+      (n: number, ex: any) => n + (ex.sets?.length || 0),
+      0
+    ) ?? 0;
+
+    let totalCardioSecs = 0;
+    completedSession.exercises?.forEach((ex: any) => {
+      const isCardio = (ex.primary_muscle || '').toLowerCase() === 'cardio' ||
+        ex.exercise_name?.toLowerCase().includes('treadmill') ||
+        ex.exercise_name?.toLowerCase().includes('cardio') ||
+        ex.exercise_name?.toLowerCase().includes('bike') ||
+        ex.exercise_name?.toLowerCase().includes('incline');
+      if (isCardio) {
+        ex.sets?.forEach((s: any) => {
+          if (s.duration_seconds) totalCardioSecs += Number(s.duration_seconds);
+        });
+      }
+    });
+    const cardioMinutes = Math.round(totalCardioSecs / 60);
+    const effectiveSecs = Math.max(completedSession.duration_seconds || 0, totalCardioSecs);
+
+    const formatDuration = (seconds?: number | null) => {
+      if (!seconds || seconds <= 0) return '0 min';
+      const mins = Math.round(seconds / 60);
+      const hrs = Math.floor(mins / 60);
+      const remMins = mins % 60;
+      if (hrs > 0) return `${hrs}h ${remMins}m`;
+      return `${mins} min`;
+    };
+
+    return (
+      <div className={styles.page}>
+        {/* Completed Hero Banner */}
+        <div className={styles.completedHeroCard}>
+          <div className={styles.completedHeroTop}>
+            <div className={styles.completedHeroLeft}>
+              <div className={styles.completedHeroIcon}>
+                <Check size={26} strokeWidth={3} />
+              </div>
+              <div className={styles.completedHeroTitleCol}>
+                <div className={styles.completedHeroEyebrowRow}>
+                  <span className={styles.completedHeroEyebrow}>Workout Completed Today</span>
+                  <Badge variant="emerald" size="sm">Finished</Badge>
+                </div>
+                <h1 className={styles.completedHeroTitle}>
+                  {completedSession.title || 'Workout Session'}
+                </h1>
+                {startedDate && (
+                  <p className={styles.completedHeroDate}>
+                    {startedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                    {' · '}
+                    {startedDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.completedHeroActions}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setCompletedSession(null);
+                  setExercises([]);
+                  router.push('/app/workouts/active?new=1');
+                }}
+              >
+                <Plus size={16} />
+                <span>Log Another Workout</span>
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => router.push('/app/workouts/plan')}
+              >
+                <span>View in Plan</span>
+                <ArrowRight size={16} />
+              </Button>
+            </div>
+          </div>
+
+          {/* Metrics summary */}
+          <div className={styles.completedHeroStatsRow}>
+            <div className={styles.completedStatTile}>
+              <div className={styles.completedStatVal}>
+                {completedSession.total_volume_kg ? `${Math.round(completedSession.total_volume_kg).toLocaleString()} kg` : '0 kg'}
+              </div>
+              <div className={styles.completedStatLbl}>Volume Lifted</div>
+            </div>
+
+            <div className={styles.completedStatTile}>
+              <div className={styles.completedStatVal}>
+                {formatDuration(effectiveSecs)}
+              </div>
+              <div className={styles.completedStatLbl}>Duration</div>
+            </div>
+
+            <div className={styles.completedStatTile}>
+              <div className={styles.completedStatVal}>
+                {totalCompletedSets}
+              </div>
+              <div className={styles.completedStatLbl}>Completed Sets</div>
+            </div>
+
+            {cardioMinutes > 0 && (
+              <div className={styles.completedStatTile}>
+                <div className={styles.completedStatVal}>
+                  {cardioMinutes} min
+                </div>
+                <div className={styles.completedStatLbl}>Cardio Total</div>
+              </div>
+            )}
+
+            {completedSession.total_calories ? (
+              <div className={styles.completedStatTile}>
+                <div className={styles.completedStatVal}>
+                  {completedSession.total_calories} kcal
+                </div>
+                <div className={styles.completedStatLbl}>Calories Burned</div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Completed Exercises List */}
+        <div className={styles.completedExercisesList}>
+          <div className={styles.completedExercisesListHeader}>
+            <h2 className={styles.completedSectionTitle}>Completed Movements</h2>
+            <span className={styles.completedSectionCount}>
+              {completedSession.exercises?.length || 0} movements logged
+            </span>
+          </div>
+
+          {completedSession.exercises?.map((ex: any, idx: number) => {
+            const isCardio = (ex.primary_muscle || '').toLowerCase() === 'cardio' ||
+              ex.exercise_name?.toLowerCase().includes('treadmill') ||
+              ex.exercise_name?.toLowerCase().includes('cardio') ||
+              ex.exercise_name?.toLowerCase().includes('bike') ||
+              ex.exercise_name?.toLowerCase().includes('incline');
+
+            return (
+              <Card key={ex.id || idx} className={styles.completedExerciseCard}>
+                <div className={styles.completedExerciseHeader}>
+                  <div className={styles.completedExerciseHeaderLeft}>
+                    <div className={styles.completedCheckBadge}>
+                      <Check size={14} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h3 className={styles.completedExerciseName}>
+                        #{idx + 1} {ex.exercise_name}
+                      </h3>
+                      <div className={styles.completedExerciseMeta}>
+                        <Badge variant={isCardio ? 'cyan' : 'emerald'} size="sm">
+                          {ex.primary_muscle || (isCardio ? 'Cardio' : 'Movement')}
+                        </Badge>
+                        {ex.sets?.length > 0 && (
+                          <span className={styles.completedExerciseSetsSummary}>
+                            {ex.sets.length} {ex.sets.length === 1 ? 'set' : 'sets'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.tableWrap}>
+                  <table className={styles.setsTable}>
+                    <thead>
+                      <tr>
+                        <th className={`${styles.th} ${styles.thSet}`}>Set</th>
+                        <th className={styles.th}>Type</th>
+                        <th className={styles.th}>{isCardio ? 'Duration' : 'Weight'}</th>
+                        <th className={styles.th}>{isCardio ? 'Incline' : 'Reps'}</th>
+                        {isCardio && <th className={styles.th}>Speed</th>}
+                        {isCardio && <th className={styles.th}>Calories</th>}
+                        <th className={`${styles.th} ${styles.thDone}`}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ex.sets?.map((set: any, sIdx: number) => (
+                        <tr key={set.id || sIdx} className={styles.completedSetRow}>
+                          <td className={`${styles.td} ${styles.tdSetNumber}`}>
+                            {set.set_number || sIdx + 1}
+                          </td>
+                          <td className={styles.td}>
+                            <span className={styles.setTypeText}>
+                              {set.intensity || (set.set_type === 'WARMUP' ? 'Warmup' : isCardio ? 'Interval' : 'Normal')}
+                            </span>
+                          </td>
+                          <td className={styles.td}>
+                            <strong className={styles.setValueHighlight}>
+                              {isCardio
+                                ? `${Math.round((set.duration_seconds || 0) / 60)} min`
+                                : `${set.weight_kg ?? 0} kg`}
+                            </strong>
+                          </td>
+                          <td className={styles.td}>
+                            {isCardio
+                              ? (set.incline_percent !== null && set.incline_percent !== undefined ? `${set.incline_percent}%` : '—')
+                              : `${set.reps ?? 0} reps`}
+                          </td>
+                          {isCardio && (
+                            <td className={styles.td}>
+                              {set.speed_kmh ? `${set.speed_kmh} km/h` : '—'}
+                            </td>
+                          )}
+                          {isCardio && (
+                            <td className={styles.td}>
+                              {set.calories ? `${set.calories} kcal` : '—'}
+                            </td>
+                          )}
+                          <td className={`${styles.td} ${styles.tdDone}`}>
+                            <div className={styles.completedCheckIcon}>
+                              <Check size={14} strokeWidth={3} />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

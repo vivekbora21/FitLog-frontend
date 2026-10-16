@@ -260,3 +260,107 @@
 .logoutItem:hover {
   background: #FFF1F2;
 }
+
+/* Today Page Custom Navbar Styles */
+.headerToday {
+  height: 72px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #EEF2F6;
+}
+
+.todayLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.todayTitleGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.todayPageTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 750;
+  color: #0F172A;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.todayDateSubtitle {
+  font-size: 0.8125rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.todayHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.todayDateNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dateNavBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.dateNavBtn:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+.todayProfileBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 9999px;
+  transition: background 150ms ease;
+}
+
+.todayProfileBtn:hover {
+  background: #F1F5F9;
+}
+
+.todayAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0A6C58;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 750;
+  font-size: 0.8125rem;
+  flex-shrink: 0;
+}
+
+.todayUserName {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: #0F172A;
+}
+

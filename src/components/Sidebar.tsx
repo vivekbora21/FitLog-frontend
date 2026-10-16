@@ -5,11 +5,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
-  PlayCircle,
   Clock,
   CalendarDays,
   ClipboardList,
-  TrendingUp,
   Ruler,
   Utensils,
   Award,
@@ -21,20 +19,16 @@ import {
   Building2,
   Dumbbell,
   Plus,
-  LogOut,
   User,
   X,
   ChevronLeft,
   ChevronRight,
-  PanelLeftClose,
-  PanelLeftOpen,
   LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { api } from '@/lib/api';
 import { JourneyPacingData } from '@/lib/types';
 import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
 import styles from './Sidebar.module.css';
 
 interface NavItem {
@@ -56,7 +50,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, onClose, onToggleCollapse }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const isTrainer = user?.memberships?.some((m) => m.role === 'TRAINER');
   const isOwner = user?.memberships?.some((m) => m.role === 'OWNER');
@@ -81,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, o
 
   const mainNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/app', icon: LayoutDashboard },
-    { label: 'Today', href: '/app/workouts/active', icon: Clock },
+    { label: 'Today', href: '/app/today', icon: Clock, badge: 'LIVE', badgeVariant: 'emerald' },
     { label: 'Plan', href: '/app/workouts/plan', icon: CalendarDays, badge: planBadge, badgeVariant: 'cyan' },
     { label: 'Plan History', href: '/app/workouts/plan/history', icon: History },
     { label: 'Routines', href: '/app/workouts/routines', icon: ListOrdered },
@@ -104,6 +98,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, o
     if (href === '/app') {
       return pathname === '/app' || pathname === '/app/';
     }
+    if (href === '/app/today') {
+      return pathname === '/app/today' || pathname.startsWith('/app/today');
+    }
     if (href === '/app/workouts/plan') {
       return (
         pathname === '/app/workouts/plan' ||
@@ -118,11 +115,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, o
       );
     }
     return pathname === href || pathname.startsWith(href + '/') || pathname.startsWith(href + '?');
-  };
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
   };
 
   const userInitials = (user?.full_name || user?.email || 'U')
@@ -318,16 +310,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, o
               <Plus size={18} strokeWidth={2.5} />
             </button>
           ) : (
-            <button
-              onClick={() => {
-                onClose();
-                router.push('/app/workouts/active');
-              }}
-              className={styles.logWorkoutBtn}
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              <span>Log Workout</span>
-            </button>
+            <div className={styles.bottomBarRow}>
+              <div className={styles.bottomUserAvatar}>
+                {userInitials[0] || 'N'}
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  router.push('/app/workouts/active');
+                }}
+                className={styles.logWorkoutBtn}
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                <span>Log Workout</span>
+              </button>
+            </div>
           )}
         </div>
       </aside>

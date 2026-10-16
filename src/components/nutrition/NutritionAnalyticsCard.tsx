@@ -135,7 +135,12 @@ export const NutritionAnalyticsCard: React.FC<NutritionAnalyticsCardProps> = ({
 
       {/* Interactive SVG Bar Chart with Target Reference Line */}
       <div className={styles.chartContainer}>
-        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className={styles.chartSvg}>
+        {historyDays.length === 0 ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: chartHeight, color: '#64748B', fontSize: '0.9rem' }}>
+            No nutrition entries logged in this period.
+          </div>
+        ) : (
+          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className={styles.chartSvg}>
           {/* Y Axis Guide Lines */}
           {[0, 0.2, 0.4, 0.6, 0.8, 1].map((pct) => {
             const val = Math.round(yMax * pct);
@@ -240,6 +245,7 @@ export const NutritionAnalyticsCard: React.FC<NutritionAnalyticsCardProps> = ({
             );
           })}
         </svg>
+        )}
       </div>
 
       {/* Daily Macro Summary Table */}
@@ -257,7 +263,14 @@ export const NutritionAnalyticsCard: React.FC<NutritionAnalyticsCardProps> = ({
               </tr>
             </thead>
             <tbody>
-              {tableRows.map((r) => {
+              {tableRows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '1.5rem', color: '#64748B' }}>
+                    No meals logged for this timeframe.
+                  </td>
+                </tr>
+              ) : (
+                tableRows.map((r) => {
                 const dateObj = new Date(r.date + 'T00:00:00');
                 const formatted = isNaN(dateObj.getTime())
                   ? r.date
@@ -279,7 +292,8 @@ export const NutritionAnalyticsCard: React.FC<NutritionAnalyticsCardProps> = ({
                     <td>{r.total_fat}</td>
                   </tr>
                 );
-              })}
+              })
+              )}
             </tbody>
           </table>
         </div>

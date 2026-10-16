@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Circle, Clock, Dumbbell, Flag, Layers, Play, SlidersHorizontal, Repeat2, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useDomainEvent } from '@/lib/events';
 import { PlanSelectorModal } from '@/components/PlanSelectorModal';
 import { ExerciseModal } from '@/components/ExerciseModal';
 import { Badge } from '@/components/ui/Badge';
@@ -74,6 +75,7 @@ type ProgramDay = {
   completed_duration_seconds?: number | null;
   completed_volume_kg?: number | null;
   completed_session?: CompletedSession | null;
+  workout_payload?: any;
   routine_details?: {
     id: string;
     name: string;
@@ -145,7 +147,16 @@ export default function WorkoutPlanPage() {
     api.getWorkoutPlan()
       .then((plan) => {
         setPayload(plan);
-        setSelectedDay(plan.program?.current_day || 1);
+        const todayStr = new Date().toISOString().split('T')[0];
+        // If a day was completed today, default to that completed day so the user immediately sees what they logged today
+        const completedToday = plan.days?.find(
+          (d: ProgramDay) => d.status === 'COMPLETED' && (
+            d.completed_session?.started_at?.startsWith(todayStr) ||
+            d.completed_session?.completed_at?.startsWith(todayStr) ||
+            d.calendar_date === todayStr
+          )
+        );
+        setSelectedDay(completedToday ? completedToday.day_number : (plan.program?.current_day || 1));
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -154,6 +165,11 @@ export default function WorkoutPlanPage() {
   useEffect(() => {
     loadPlan();
   }, []);
+
+  // Reactive cross-view synchronization
+  useDomainEvent('workout-completed', () => loadPlan());
+  useDomainEvent('workout-deleted', () => loadPlan());
+  useDomainEvent('plan-updated', () => loadPlan());
 
   // Merge a freshly-swapped ProgramDay (server response) back into local state without a refetch.
   const applyUpdatedDay = (updatedDay: ProgramDay) => {
@@ -201,11 +217,48 @@ export default function WorkoutPlanPage() {
   const currentDay = program?.current_day || 1;
   const day = useMemo(() => days.find((item) => item.day_number === selectedDay), [days, selectedDay]);
   const routine = day?.routine_details;
+  const displayExercises = useMemo(() => {
+    if (routine?.exercises && routine.exercises.length > 0) {
+      return routine.exercises;
+    }
+    const wp = day?.workout_payload;
+    const rawList = Array.isArray(wp) ? wp : wp?.exercises;
+    if (Array.isArray(rawList) && rawList.length > 0) {
+      return rawList.map((item: any, idx: number) => ({
+        id: item.id || `payload-ex-${idx}`,
+        exercise: item.exercise || '',
+        exercise_name: item.exercise_name || item.name || `Exercise ${idx + 1}`,
+        primary_muscle: item.primary_muscle || '',
+        order: idx,
+        target_sets: Number(item.sets || item.target_sets || 3),
+        target_reps: String(item.reps || item.target_reps || '8-12'),
+        rest_seconds: Number(item.rest_seconds || 90),
+        target_rpe: item.rpe,
+        suggested_weight_kg: item.suggested_weight_kg,
+        focus: item.focus || '',
+        notes: item.notes || item.progression_rule || '',
+        progression: null,
+        swap: null,
+      })) as PlanExercise[];
+    }
+    return [];
+  }, [routine, day]);
   const completedExercises = useMemo(() => day?.completed_session?.exercises || [], [day]);
   const completed = days.filter((item) => item.status === 'COMPLETED').length;
   const completedWorkouts = planState?.completed_workout_count ?? completed;
   const progressPercent = planState?.calendar_progress_percent ?? Math.round((completedWorkouts / Math.max(duration, 1)) * 100);
   const selectedTone = day ? statusTone(day, currentDay) : null;
+
+  const completedTodayDay = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return days.find(
+      (item) => item.status === 'COMPLETED' && (
+        item.completed_session?.started_at?.startsWith(todayStr) ||
+        item.completed_session?.completed_at?.startsWith(todayStr) ||
+        item.calendar_date === todayStr
+      )
+    );
+  }, [days]);
 
   // Dynamic milestones
   const milestones = useMemo(() => {
@@ -359,8 +412,17 @@ export default function WorkoutPlanPage() {
               onClick={() => setSelectedDay(currentDay)}
               className={styles.dayNavBtn}
             >
-              Current Day
+              Current Day (Day {currentDay})
             </button>
+            {completedTodayDay && selectedDay !== completedTodayDay.day_number && (
+              <button
+                onClick={() => setSelectedDay(completedTodayDay.day_number)}
+                className={styles.dayNavBtn}
+                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+              >
+                ✓ Today (Day {completedTodayDay.day_number})
+              </button>
+            )}
             <button
               onClick={() => setSelectedDay(Math.min(duration, selectedDay + 1))}
               className={styles.dayNavBtn}
@@ -368,6 +430,22 @@ export default function WorkoutPlanPage() {
               Next Day <ChevronRight size={15} />
             </button>
           </section>
+
+          {completedTodayDay && selectedDay !== completedTodayDay.day_number && (
+            <div className={styles.completedNoticeBanner}>
+              <div className={styles.completedNoticeText}>
+                <CheckCircle2 size={18} color="var(--color-primary)" />
+                <span>You completed today&apos;s workout ({completedTodayDay.completed_session_title || completedTodayDay.label || completedTodayDay.routine_details?.name})!</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDay(completedTodayDay.day_number)}
+                className={styles.completedNoticeBtn}
+              >
+                View Today&apos;s Completed Workout (Day {completedTodayDay.day_number})
+              </button>
+            </div>
+          )}
 
           <section className={styles.dayCard}>
             <div className={styles.dayCardHeader}>
@@ -396,7 +474,7 @@ export default function WorkoutPlanPage() {
                   href="/app/workouts/active"
                   className={styles.logWorkoutCta}
                 >
-                  Log this workout
+                  {completedTodayDay ? `Log Day ${day.day_number} Early` : 'Log this workout'}
                 </Link>
               )}
             </div>
@@ -544,7 +622,7 @@ export default function WorkoutPlanPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(routine?.exercises || []).map((exercise) => (
+                    {(displayExercises || []).map((exercise) => (
                       <tr key={exercise.id} className={styles.exerciseTr}>
                         <td className={styles.exerciseTd}>
                           <div className={styles.exerciseNameRow}>
@@ -595,7 +673,7 @@ export default function WorkoutPlanPage() {
                         </td>
                       </tr>
                     ))}
-                    {!routine?.exercises?.length && (
+                    {!displayExercises?.length && (
                       <tr>
                         <td colSpan={8} className={styles.noExercisesTd}>No exercises configured for this day.</td>
                       </tr>

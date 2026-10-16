@@ -1,5 +1,6 @@
 import { validateApiPayload, type DateRangeParams } from '@fitlog/shared';
 import type { Blueprint, TrainingSplit, CreatePlanResponse, Food, JourneyDetail, JourneyMode, MacroTarget, PlanRequest, PlanRoadmap, RecommendedTargets, RecentFood, NutritionDayResponse, NutritionHistoryResponse, TargetField, TargetsPayload, WeightEntry, BodyMeasurement, PrTrendPoint } from './types';
+import { domainEvents } from './events';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -12,11 +13,22 @@ function localDateKey(date = new Date()): string {
 
 class ApiClient {
   private token: string | null = null;
+  private isRefreshing = false;
+  private refreshSubscribers: ((token: string | null) => void)[] = [];
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('fitlog_access_token');
     }
+  }
+
+  private onTokenRefreshed(token: string | null) {
+    this.refreshSubscribers.forEach((cb) => cb(token));
+    this.refreshSubscribers = [];
+  }
+
+  private addRefreshSubscriber(cb: (token: string | null) => void) {
+    this.refreshSubscribers.push(cb);
   }
 
   setToken(token: string | null) {
@@ -45,9 +57,7 @@ class ApiClient {
   }
 
   logout() {
-    // Best-effort: revoke the refresh token server-side so it can't be replayed after
-    // sign-out. Fire-and-forget — local tokens are cleared regardless of the outcome,
-    // and callers of logout() don't await it today.
+    // Best-effort: revoke the refresh token server-side so it can't be replayed after sign-out.
     const refresh = typeof window !== 'undefined' ? localStorage.getItem('fitlog_refresh_token') : null;
     if (refresh && this.token) {
       this.request('/auth/logout/', {
@@ -59,7 +69,7 @@ class ApiClient {
     this.setRefreshToken(null);
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}, isRetry = false): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-API-Version': '1',
@@ -72,27 +82,103 @@ class ApiClient {
 
     const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-    const res = await fetch(url, {
-      ...options,
-      headers,
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        ...options,
+        headers,
+      });
+    } catch (networkError) {
+      throw networkError;
+    }
+
+    if (res.status === 401 && !isRetry) {
+      const isAuthEndpoint =
+        endpoint.includes('/auth/login') ||
+        endpoint.includes('/auth/refresh') ||
+        endpoint.includes('/auth/register');
+      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('fitlog_refresh_token') : null;
+
+      if (!isAuthEndpoint && refreshToken) {
+        if (this.isRefreshing) {
+          return new Promise<T>((resolve, reject) => {
+            this.addRefreshSubscriber(async (newToken) => {
+              if (!newToken) {
+                return reject(new Error('Session expired. Please log in again.'));
+              }
+              try {
+                const retryResult = await this.request<T>(endpoint, options, true);
+                resolve(retryResult);
+              } catch (err) {
+                reject(err);
+              }
+            });
+          });
+        }
+
+        this.isRefreshing = true;
+
+        try {
+          const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Version': '1',
+            },
+            body: JSON.stringify({ refresh: refreshToken }),
+          });
+
+          if (refreshRes.status >= 500) {
+            this.isRefreshing = false;
+            this.onTokenRefreshed(null);
+            throw new Error(`Server error during token refresh: ${refreshRes.status}`);
+          }
+
+          if (!refreshRes.ok) {
+            throw new Error('Refresh token invalid or expired');
+          }
+
+          const refreshData = await refreshRes.json();
+          const newAccess = refreshData.access;
+          this.setToken(newAccess);
+          if (refreshData.refresh) {
+            this.setRefreshToken(refreshData.refresh);
+          }
+
+          this.isRefreshing = false;
+          this.onTokenRefreshed(newAccess);
+
+          // Retry the original request with new access token
+          return this.request<T>(endpoint, options, true);
+        } catch (refreshErr) {
+          this.isRefreshing = false;
+          this.onTokenRefreshed(null);
+          this.logout();
+          if (typeof window !== 'undefined' && window.location.pathname.startsWith('/app')) {
+            window.location.href = '/login';
+          }
+          throw refreshErr;
+        }
+      } else {
+        if (typeof window !== 'undefined') {
+          this.logout();
+          if (window.location.pathname.startsWith('/app')) {
+            window.location.href = '/login';
+          }
+        }
+      }
+    }
 
     if (!res.ok) {
-      let errorBody = {};
+      let errorBody: any = {};
       try {
         errorBody = await res.json();
       } catch (e) {
         // Not JSON
       }
 
-      if (res.status === 401 && typeof window !== 'undefined') {
-        this.logout();
-        if (window.location.pathname.startsWith('/app')) {
-          window.location.href = '/login';
-        }
-      }
-
-      const error = new Error(`API Error: ${res.status} ${res.statusText}`);
+      const msg = errorBody.detail || errorBody.error?.message || `API Error: ${res.status} ${res.statusText}`;
+      const error = new Error(msg);
       (error as any).response = errorBody;
       (error as any).status = res.status;
       throw error;
@@ -227,8 +313,9 @@ class ApiClient {
     return this.request<any>(`/workouts/sessions/${query}`);
   }
 
-  async getTodaysWorkout() {
-    return this.request<any>('/workouts/sessions/today/');
+  async getTodaysWorkout(dateStr?: string) {
+    const query = dateStr ? `?date=${dateStr}` : '';
+    return this.request<any>(`/workouts/sessions/today/${query}`);
   }
 
   async getWorkoutPlan() {
@@ -252,20 +339,35 @@ class ApiClient {
   }
 
   async createWorkoutSession(sessionData: any) {
-    return this.request<any>('/workouts/sessions/', {
+    const res = await this.request<any>('/workouts/sessions/', {
       method: 'POST',
       body: JSON.stringify(sessionData),
     });
+    domainEvents.emit('workout-completed', {
+      program_day_id: sessionData.program_day_id,
+      session_id: res?.id,
+    });
+    return res;
+  }
+
+  async deleteWorkoutSession(sessionId: string) {
+    const res = await this.request<any>(`/workouts/sessions/${sessionId}/`, {
+      method: 'DELETE',
+    });
+    domainEvents.emit('workout-deleted', { session_id: sessionId });
+    return res;
   }
 
   // Swap the recommended exercise for a routine-exercise slot on a specific program day.
   // Sending the slot's own original `exercise` id as exercise_id reverts the override.
   // Returns the full updated ProgramDay payload (same shape as one entry of plan.days[]).
   async swapExercise(payload: { day_number: number; routine_exercise_id: string; exercise_id: string }) {
-    return this.request<any>('/workouts/sessions/swap-exercise/', {
+    const res = await this.request<any>('/workouts/sessions/swap-exercise/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    domainEvents.emit('plan-updated');
+    return res;
   }
 
   async getRoutines() {
@@ -308,23 +410,29 @@ class ApiClient {
 
   // Pass `food` + `servings` or `quantity` to have the server compute macros; otherwise send them explicitly.
   async addMeal(mealData: { meal_type: string; name?: string; food?: string; servings?: number; quantity?: number; calories?: number; protein_g?: number; carbs_g?: number; fat_g?: number; date?: string }) {
-    return this.request<any>('/nutrition/meals/', {
+    const res = await this.request<any>('/nutrition/meals/', {
       method: 'POST',
       body: JSON.stringify(mealData),
     });
+    domainEvents.emit('nutrition-updated', { date: mealData.date });
+    return res;
   }
 
   async deleteMeal(mealId: string) {
-    return this.request<any>(`/nutrition/meals/${mealId}/`, {
+    const res = await this.request<any>(`/nutrition/meals/${mealId}/`, {
       method: 'DELETE',
     });
+    domainEvents.emit('nutrition-updated');
+    return res;
   }
 
   async updateMeal(mealId: string, mealData: { name?: string; servings?: number; quantity?: number; calories?: number; protein_g?: number; carbs_g?: number; fat_g?: number }) {
-    return this.request<any>(`/nutrition/meals/${mealId}/`, {
+    const res = await this.request<any>(`/nutrition/meals/${mealId}/`, {
       method: 'PATCH',
       body: JSON.stringify(mealData),
     });
+    domainEvents.emit('nutrition-updated');
+    return res;
   }
 
   async getRecentFoods() {
@@ -332,10 +440,12 @@ class ApiClient {
   }
 
   async repeatYesterdayMeal(mealType?: string, date?: string) {
-    return this.request<{ copied_count: number; meals: any[]; day: any }>('/nutrition/repeat-yesterday/', {
+    const res = await this.request<{ copied_count: number; meals: any[]; day: any }>('/nutrition/repeat-yesterday/', {
       method: 'POST',
       body: JSON.stringify({ meal_type: mealType, date }),
     });
+    domainEvents.emit('nutrition-updated', { date });
+    return res;
   }
 
   async searchFoods(search: string = '') {
@@ -355,10 +465,15 @@ class ApiClient {
 
   /** Partial edit. With dryRun the server returns the rebalanced result and warnings without saving. */
   async updateTargets(changes: Partial<Record<TargetField, number | null>>, dryRun = false) {
-    return this.request<TargetsPayload>('/nutrition/macro-targets/', {
+    const res = await this.request<TargetsPayload>('/nutrition/macro-targets/', {
       method: 'PUT',
       body: JSON.stringify({ ...changes, dry_run: dryRun }),
     });
+    if (!dryRun) {
+      domainEvents.emit('nutrition-updated');
+      domainEvents.emit('plan-updated');
+    }
+    return res;
   }
 
   async getRecommendedTargets() {
@@ -366,14 +481,19 @@ class ApiClient {
   }
 
   async applyRecommendedTargets() {
-    return this.request<MacroTarget>('/nutrition/macro-targets/recommended/', { method: 'POST' });
+    const res = await this.request<MacroTarget>('/nutrition/macro-targets/recommended/', { method: 'POST' });
+    domainEvents.emit('nutrition-updated');
+    domainEvents.emit('plan-updated');
+    return res;
   }
 
   async updateWater(dateStr: string, waterMl: number) {
-    return this.request<any>(`/nutrition/${dateStr}/`, {
+    const res = await this.request<any>(`/nutrition/${dateStr}/`, {
       method: 'PATCH',
       body: JSON.stringify({ water_consumed_ml: waterMl }),
     });
+    domainEvents.emit('nutrition-updated', { date: dateStr });
+    return res;
   }
 
   // Progress
@@ -384,10 +504,12 @@ class ApiClient {
 
   async logWeight(weight_kg: number, body_fat_pct?: number, notes?: string) {
     const today = localDateKey();
-    return this.request<any>('/progress/weight/', {
+    const res = await this.request<any>('/progress/weight/', {
       method: 'POST',
       body: JSON.stringify({ date: today, weight_kg, body_fat_pct, notes: notes || '' }),
     });
+    domainEvents.emit('measurement-updated', { date: today });
+    return res;
   }
 
   async getMeasurements(clientId?: string, range: DateRangeParams = {}) {
@@ -406,23 +528,29 @@ class ApiClient {
   }
 
   async logMeasurement(data: Record<string, any>) {
-    return this.request<any>('/progress/measurements/', {
+    const res = await this.request<any>('/progress/measurements/', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    domainEvents.emit('measurement-updated', { date: data.date });
+    return res;
   }
 
   async updateMeasurement(id: string, data: Record<string, any>) {
-    return this.request<any>(`/progress/measurements/${id}/`, {
+    const res = await this.request<any>(`/progress/measurements/${id}/`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
+    domainEvents.emit('measurement-updated', { date: data.date });
+    return res;
   }
 
   async deleteMeasurement(id: string) {
-    return this.request<any>(`/progress/measurements/${id}/`, {
+    const res = await this.request<any>(`/progress/measurements/${id}/`, {
       method: 'DELETE',
     });
+    domainEvents.emit('measurement-updated');
+    return res;
   }
 
   async getPersonalRecords(clientId?: string) {
@@ -442,8 +570,9 @@ class ApiClient {
   }
 
   async getDailyLogForDate(dateStr: string) {
-    const data = await this.request<any[]>(`/progress/daily/?date=${dateStr}`);
-    return data && data.length > 0 ? data[0] : null;
+    const res = await this.request<any>(`/progress/daily/?date=${dateStr}`);
+    const list = Array.isArray(res) ? res : (res?.results || []);
+    return list.length > 0 ? list[0] : null;
   }
 
   async logDaily(data: {
@@ -514,10 +643,12 @@ class ApiClient {
     focus_exercise_id?: string | null;
     target_focus_1rm?: number | null;
   }) {
-    return this.request<any>('/workouts/sessions/start-journey/', {
+    const res = await this.request<any>('/workouts/sessions/start-journey/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    domainEvents.emit('plan-updated');
+    return res;
   }
 
   // Guided Plan Builder
@@ -540,10 +671,12 @@ class ApiClient {
   }
 
   async createPlan(payload: PlanRequest) {
-    return this.request<CreatePlanResponse>('/plans/', {
+    const res = await this.request<CreatePlanResponse>('/plans/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    domainEvents.emit('plan-updated');
+    return res;
   }
 
   async recommendGoalWeight(payload: { mode: JourneyMode; current_weight_kg: number; height_cm: number; duration_days: number }) {

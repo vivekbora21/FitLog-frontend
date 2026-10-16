@@ -7,6 +7,7 @@ export interface UserProfile {
   activity_level?: 'SEDENTARY' | 'LIGHT' | 'MODERATE' | 'HIGH' | 'ATHLETE';
   fitness_goal: string;
   unit_preference: string;
+  timezone?: string;
   bio: string;
 }
 
@@ -280,6 +281,9 @@ export interface NutritionDayResponse {
   targets: MacroTarget;
   yesterday_meals?: MealEntry[];
   plan?: NutritionPlanInfo;
+  macro_summary?: any;
+  macro_breakdown?: any;
+  target_derivation?: any;
 }
 
 export interface NutritionHistoryDay {
@@ -390,6 +394,7 @@ export interface MacroTarget {
   weekly_workouts: number | null;
   /** null = follow the active plan's cardio phase */
   weekly_cardio_minutes: number | null;
+  weekly_calories_burned?: number | null;
   /** Estimated calories burned across the day's logged workout sessions. */
   exercise_calories: number;
 }
@@ -451,6 +456,14 @@ export interface PersonalRecord {
   reps: number;
   estimated_one_rep_max: number;
   achieved_at: string;
+  is_improved: boolean;
+  improvement_count: number;
+}
+
+export interface PrTrendPoint {
+  date: string;
+  estimated_one_rep_max: number;
+  weight_kg: number;
 }
 
 export interface ProgressPhoto {
@@ -547,6 +560,7 @@ export interface CalendarDayInfo {
   duration_min: number;
   volume_kg: number;
   exercises_count: number;
+  session_id?: string | null;
   notes?: string;
   steps?: number | null;
   sleep_hours?: number | null;
@@ -562,6 +576,7 @@ export interface CalendarDayInfo {
 
 export interface DashboardStats {
   streak_days: number;
+  account_age_days: number;
   workouts_this_week: number;
   workouts_this_month: number;
   weekly_workouts_target?: number;
@@ -607,6 +622,7 @@ export interface DashboardStats {
     weekly_weight_change?: number | null;
     current_waist?: number | null;
     starting_waist?: number | null;
+    target_waist?: number | null;
     waist_change?: number | null;
     cardio_minutes?: number;
     cardio_target?: number;
@@ -614,6 +630,7 @@ export interface DashboardStats {
     program_day?: number | null;
     program_length?: number;
     program_completion_percent?: number;
+    plan_state?: PlanState;
   };
   daily_log?: {
     steps?: number;
@@ -633,6 +650,26 @@ export interface DashboardStats {
     nutrition: { date: string; label: string; calories: number; calories_target: number; protein: number; protein_target: number }[];
     calories_burned: { date: string; label: string; calories_burned: number }[];
   };
+}
+
+export interface PlanState {
+  start_date: string;
+  original_end_date: string;
+  effective_end_date: string;
+  duration_days: number;
+  effective_duration_days: number;
+  elapsed_calendar_days: number;
+  remaining_calendar_days: number;
+  calendar_progress_percent: number;
+  completed_workout_count: number;
+  missed_workout_count: number;
+  scheduled_workout_count: number;
+  completed_workout_dates: string[];
+  plan_status: 'ACTIVE' | 'COMPLETED';
+  extension_status: 'NONE' | 'DECLINED' | 'ACCEPTED';
+  extension_days: number;
+  extension_eligible: boolean;
+  near_completion: boolean;
 }
 
 export type WeeklyHealthStatus = 'good' | 'warn' | 'bad' | 'pending';
@@ -714,6 +751,7 @@ export interface JourneyPacingData {
   copilot_insight: string;
   starting_waist?: number | null;
   current_waist?: number | null;
+  target_waist?: number | null;
   target_weight?: number | null;
   expected_weight_change?: number | null;
   weekly_workouts_target?: number;
@@ -790,6 +828,79 @@ export interface PlanPhase {
   name: string;
   start_day: number;
   end_day: number;
+  /** One-sentence plain-language description of this phase (spec v1.6 section 6.5). */
+  description: string;
+}
+
+// --- Plan engine (spec v1.6 section 3/4/5) -----------------------------------
+// Mirrors workouts.plan_engine.domain.Message / PlanTargets, as actually
+// serialized onto a roadmap response's `engine` key by
+// plans/services/engine_adapter.py `engine_metadata_for_storage` -- NOT the
+// full `serialize_plan_targets()` shape (several PlanTargets fields,
+// notably `weekly_change_pct_bodyweight`, `requested_weekly_change_pct`,
+// `days_needed`, `bmr`, `tdee`, `calorie_delta`, `override_source`,
+// `suggested_calories`/`suggested_macros`, are NOT forwarded by the current
+// `plans/` HTTP layer -- see the implementation report). Only read fields
+// that are actually present below; do not assume the full engine shape.
+export type MessageSeverity = 'block' | 'warn' | 'info';
+
+export interface PlanMessage {
+  code: string;
+  severity: MessageSeverity;
+  params: Record<string, string | number | boolean | null>;
+}
+
+export type PlanPrecision = 'calorie_projected' | 'directional' | 'maintenance';
+export type PlanPaceStatus = 'gentle' | 'typical' | 'aggressive' | 'not_applicable';
+export type PlanExperience = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+export type PlanEquipmentLevel = 'full_gym' | 'home_basic' | 'minimal';
+export type RecompDirection = 'lean_out' | 'maintain' | 'lean_gain';
+
+/** The subset of PlanTargets actually forwarded onto `PlanRoadmap.engine`. */
+export interface PlanEngineMeta {
+  engine_version: string;
+  can_start: boolean;
+  activity_factor: number;
+  precision: PlanPrecision;
+  predicted_weekly_change_kg: number | null;
+  pace_status: PlanPaceStatus;
+  calories_clamped: boolean;
+  target_calories: number | null;
+  target_protein_g: number | null;
+  target_fat_g: number | null;
+  target_carbs_g: number | null;
+  messages: PlanMessage[];
+}
+
+export interface PlanVolumeInfo {
+  experience: string;
+  weekly_sets_by_muscle_group: Record<string, number>;
+  messages: PlanMessage[];
+}
+
+export interface SupportedCombination {
+  days_per_week: number;
+  split_slug: string;
+  equipment_level: PlanEquipmentLevel;
+}
+
+/** Spec v1.6 V-21 NO_SUPPORTED_SPLIT -- preview returns this with HTTP 200
+ * and `can_start: false`; create returns the same `code`/`detail`/
+ * `supported_combinations` fields (no `can_start`) with HTTP 422. */
+export interface NoSupportedSplitPayload {
+  code: 'NO_SUPPORTED_SPLIT';
+  detail: string;
+  supported_combinations: SupportedCombination[];
+}
+
+export interface NoSupportedSplitResult extends NoSupportedSplitPayload {
+  can_start: false;
+}
+
+export function isNoSupportedSplitResult(
+  result: PlanRoadmap | NoSupportedSplitResult
+): result is NoSupportedSplitResult {
+  return (result as NoSupportedSplitResult)?.code === 'NO_SUPPORTED_SPLIT';
 }
 
 export interface Blueprint {
@@ -808,26 +919,34 @@ export interface Blueprint {
   workout_templates: Record<string, BlueprintWorkoutExercise[]>;
   /** Keyed breakfast/lunch/snack/dinner. */
   meal_templates: Record<string, BlueprintMealSlot>;
+  /** Slug of the TrainingSplit this blueprint pairs with by default, if any. */
+  default_training_split_slug: string | null;
   is_active: boolean;
   display_order: number;
   created_at: string;
   updated_at: string;
 }
 
+/**
+ * How weekly training volume is organized across days (bro split, push/pull/legs,
+ * upper/lower, full body, ...) - independent of a Blueprint's mode. Paired with a
+ * Blueprint via split_slug on preview/create to swap its workout content in.
+ */
 export interface TrainingSplit {
   id: string;
   slug: string;
   name: string;
   description: string;
   days_per_week: number;
+  /** Keyed "day_1".."day_7". */
   workout_templates: Record<string, BlueprintWorkoutExercise[]>;
   is_active: boolean;
   display_order: number;
-  experience_levels: PlanDifficulty[];
+  experience_levels: PlanExperience[];
   compatible_goals: JourneyMode[];
   rest_days: number[];
   muscle_groups: string[];
-  equipment_requirements: string[];
+  equipment_requirements: PlanEquipmentLevel[];
   estimated_session_minutes: number;
   weekly_volume: Record<string, unknown>;
   progression_strategy: string;
@@ -839,6 +958,8 @@ export interface TrainingSplit {
 export interface PlanPreviewPayload {
   blueprint_slug?: string;
   mode?: JourneyMode;
+  /** Optional TrainingSplit slug (e.g. "push-pull-legs") to override the blueprint's own workout_templates. */
+  split_slug?: string;
   duration_days: number;
   days_per_week: number;
   weekdays?: number[];
@@ -847,16 +968,29 @@ export interface PlanPreviewPayload {
   height_cm: number;
   age: number;
   sex: 'MALE' | 'FEMALE';
-  split_slug?: string;
-  equipment_level?: 'full_gym' | 'home_basic' | 'minimal';
-  experience?: PlanDifficulty;
-  activity_level?: string;
+  /** Spec v1.6 section 6.2/6.7 -- gates split selection via SPLIT_APPROVAL (V-21).
+   * Optional; backend defaults to 'full_gym' when omitted. */
+  equipment_level?: PlanEquipmentLevel;
+  /** Spec v1.6 section 6.2/6.4 -- only consulted for the schedule/volume check
+   * (plans/services/plan_generator.py), NOT forwarded into the calorie/macro/
+   * pace engine itself (see plans/services/engine_adapter.py's fixed
+   * _DEFAULT_EXPERIENCE/_DEFAULT_EQUIPMENT -- a confirmed gap, not a client
+   * assumption; see the implementation report). Optional; backend defaults
+   * to 'INTERMEDIATE' when omitted. */
+  experience?: PlanExperience;
+  start_date?: string;
 }
 
 export interface CreatePlanPayload extends PlanPreviewPayload {
   name?: string;
 }
 
+/** @deprecated Carries literal "safe"/"unrealistic" wording from the legacy
+ * pre-engine `plan_generator._assess_feasibility` heuristic (status/message
+ * on `PlanRoadmap.feasibility`). Copy rule (spec section 9): never render
+ * the word "safe" in plan-builder UI -- use `PlanRoadmap.engine.pace_status`
+ * and `engine.messages` instead, never this field. Kept only so the type
+ * matches the real API response. */
 export type FeasibilityStatus = 'safe' | 'aggressive' | 'unrealistic';
 
 export interface PlanMacroTargets {
@@ -868,6 +1002,12 @@ export interface PlanMacroTargets {
 
 export interface PlanDayRoadmap {
   day_number: number;
+  /** ISO date (YYYY-MM-DD), spec v1.6 section 6.6 real weekdays/dates. */
+  date: string;
+  /** 3-letter abbreviation, e.g. "Mon". */
+  weekday: string;
+  /** e.g. "Mon 13 Oct: Foundation" / "Mon 13 Oct: Rest Day". */
+  label: string;
   phase: string;
   is_rest: boolean;
   workout: BlueprintWorkoutExercise[] | null;
@@ -879,11 +1019,15 @@ export interface PlanRoadmap {
   summary: {
     duration_days: number;
     workouts_per_week: number;
+    start_date: string;
     start_weight_kg: number;
     goal_weight_kg: number | null;
     daily_calories: number;
     weekly_rate_kg: number;
+    /** Slug of the TrainingSplit actually used for workout content, or null if the blueprint's own fallback was used. */
+    training_split: string | null;
   };
+  /** @deprecated see FeasibilityStatus -- do not render status or message. */
   feasibility: {
     status: FeasibilityStatus;
     message: string;
@@ -895,8 +1039,15 @@ export interface PlanRoadmap {
     training_day: PlanMacroTargets;
     rest_day: PlanMacroTargets;
   };
+  /** @deprecated plain-string warnings built from the legacy feasibility
+   * heuristic and a fixed template dict that itself uses "safe" wording --
+   * use `engine.messages` (structured code/severity/params) instead. */
   warnings: string[];
+  volume: PlanVolumeInfo;
+  engine: PlanEngineMeta;
 }
+
+export type PlanPreviewResult = PlanRoadmap | NoSupportedSplitResult;
 
 export interface CreatePlanResponse {
   message: string;
@@ -1075,8 +1226,14 @@ export interface JourneySummary {
   start_waist_cm?: number | null;
   current_waist_cm?: number | null;
   waist_change_cm?: number | null;
+  fat_burned_kg?: number | null;
+  consistency_pct?: number | null;
+  completion_rate_pct?: number | null;
   total_cardio_minutes: number;
   total_cardio_sessions: number;
+  nutrition_status?: any;
+  weekly_frequency?: any[];
+  exercise_stats?: any[];
 }
 
 export interface JourneyNutritionSummary {
@@ -1110,4 +1267,76 @@ export interface StartJourneyPayload {
   blueprint?: string;
   focus_exercise_id?: string | null;
   target_focus_1rm?: number | null;
+}
+
+
+export interface RoutineExerciseSwap {
+  id: string;
+  exercise: string;
+  exercise_name: string;
+  primary_muscle: string;
+}
+
+export interface MacroSummaryItem {
+  consumed: number;
+  target: number;
+  remaining?: number;
+  excess?: number;
+  percentage?: number;
+  is_exceeded?: boolean;
+  calories?: number;
+  pct_of_calories?: number;
+}
+
+export interface MacroSummaryCalculated {
+  calories: MacroSummaryItem;
+  protein: MacroSummaryItem;
+  carbs: MacroSummaryItem;
+  fat: MacroSummaryItem;
+  hydration?: {
+    consumed_ml: number;
+    target_ml: number;
+    consumed_l: number;
+    target_l: number;
+    remaining_ml: number;
+    remaining_l: number;
+    percentage: number;
+  };
+  calorie_budget_intact?: boolean;
+}
+
+export interface BlueprintPhase {
+  name: string;
+  start_day: number;
+  end_day: number;
+}
+
+export interface PlanRequest {
+  blueprint_slug?: string;
+  mode?: JourneyMode;
+  duration_days: number;
+  days_per_week: number;
+  weekdays?: number[];
+  current_weight_kg: number;
+  goal_weight_kg?: number;
+  height_cm: number;
+  age: number;
+  sex: 'MALE' | 'FEMALE';
+  split_slug?: string;
+  equipment_level?: 'full_gym' | 'home_basic' | 'minimal';
+  experience?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  activity_level?: string;
+  name?: string;
+}
+
+export interface PlanDayTargets {
+  daily_calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}
+
+export interface PlanFeasibility {
+  status: 'safe' | 'aggressive' | 'unrealistic';
+  message: string;
 }

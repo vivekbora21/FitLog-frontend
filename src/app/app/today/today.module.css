@@ -1,0 +1,1447 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------- */
+/* PAST DAY BANNER & DATE JUMP BAR                               */
+/* ------------------------------------------------------------- */
+.pastDayBanner {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+}
+
+.pastDayBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #1E40AF;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pastDayTag {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.returnTodayBtn {
+  background: #0A6C58;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 3px rgba(10, 108, 88, 0.25);
+}
+
+.returnTodayBtn:hover {
+  background: #085848;
+  transform: translateY(-1px);
+}
+
+/* ------------------------------------------------------------- */
+/* 7-DAY ATHLETIC WEEK CALENDAR STRIP (WHOOP / APPLE FITNESS)    */
+/* ------------------------------------------------------------- */
+.weekStripCard {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 1rem 1.35rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.weekStripHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.weekTitleInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.weekBadge {
+  background: #E6F7F0;
+  color: #0A6C58;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+  border: 1px solid #B8EBD0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.weekRangeText {
+  font-size: 0.875rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.weekNavGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weekNavBtn {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.weekNavBtn:hover {
+  background: #F8FAFC;
+  border-color: #0A6C58;
+  color: #0A6C58;
+  transform: translateY(-1px);
+}
+
+.weekJumpTodayBtn {
+  background: #0A6C58;
+  color: #FFFFFF;
+  border: 1px solid #0A6C58;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 3px rgba(10, 108, 88, 0.25);
+}
+
+.weekJumpTodayBtn:hover {
+  background: #085848;
+  transform: translateY(-1px);
+}
+
+.weekDaysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .weekDaysGrid {
+    gap: 0.35rem;
+  }
+}
+
+.weekDayCard {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 0.85rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  text-align: center;
+  min-height: 94px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.weekDayCard:hover {
+  background: #FFFFFF;
+  border-color: #0A6C58;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.weekDayCardActive {
+  background: linear-gradient(135deg, #0A6C58 0%, #064E3B 100%) !important;
+  border-color: #0A6C58 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 8px 22px rgba(10, 108, 88, 0.32) !important;
+  transform: translateY(-2px);
+}
+
+.dayCardName {
+  font-size: 0.725rem;
+  font-weight: 750;
+  color: #64748B;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.weekDayCardActive .dayCardName {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dayCardNumber {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.weekDayCardActive .dayCardNumber {
+  color: #FFFFFF;
+}
+
+.dayCardStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 22px;
+}
+
+.statusBadgeCompleted {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #E6F7F0;
+  color: #0A6C58;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  border: 1px solid #B8EBD0;
+}
+
+.weekDayCardActive .statusBadgeCompleted {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.statusBadgeRest {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #F3E8FF;
+  color: #7C3AED;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  border: 1px solid #DDD6FE;
+  letter-spacing: 0.03em;
+}
+
+.weekDayCardActive .statusBadgeRest {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.statusBadgeFocus {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.weekDayCardActive .statusBadgeFocus {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.todayIndicatorDot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0A6C58;
+}
+
+.weekDayCardActive .todayIndicatorDot {
+  background: #FFFFFF;
+}
+
+/* ------------------------------------------------------------- */
+/* TOP STATS ROW                                                 */
+/* ------------------------------------------------------------- */
+.statsRow {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr);
+  gap: 1.15rem;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .statsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .statsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Common Card Base */
+.statCard {
+  background: #FFFFFF;
+  border: 1px solid #EEF2F6;
+  border-radius: 16px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), 0 1px 2px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 180ms ease;
+}
+
+.statCard:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  border-color: #E2E8F0;
+}
+
+/* Journey Progress Card (Day 14 of 60) */
+.journeyCard {
+  background: #FFFFFF;
+  border: 1px solid #EEF2F6;
+  border-radius: 16px;
+  padding: 1.25rem 1.45rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.journeyTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 0.85rem 0;
+  letter-spacing: -0.01em;
+}
+
+.journeyProgressRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.65rem;
+}
+
+.progressBarTrack {
+  flex: 1;
+  height: 8px;
+  background: #EEF2F6;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressBarFillTeal {
+  height: 100%;
+  background: #10B981;
+  border-radius: 9999px;
+  transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.journeyPctText {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0F172A;
+  white-space: nowrap;
+}
+
+.journeySubtext {
+  font-size: 0.8125rem;
+  color: #64748B;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Metric / Macro Mini Cards */
+.macroHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.iconCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconCalories {
+  background: #FFF7ED;
+  color: #F97316;
+}
+
+.iconProtein {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.iconCarbs {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.iconFat {
+  background: #F5F3FF;
+  color: #7C3AED;
+}
+
+.macroMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.macroValues {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  line-height: 1.2;
+}
+
+.macroCurrent {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: #0F172A;
+  letter-spacing: -0.01em;
+}
+
+.macroTarget {
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.macroLabel {
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: #64748B;
+  margin-top: 1px;
+}
+
+.macroBarFillCalories {
+  height: 100%;
+  background: #10B981;
+  border-radius: 9999px;
+  transition: width 400ms ease;
+}
+
+.macroBarFillProtein {
+  height: 100%;
+  background: #2563EB;
+  border-radius: 9999px;
+  transition: width 400ms ease;
+}
+
+.macroBarFillCarbs {
+  height: 100%;
+  background: #F59E0B;
+  border-radius: 9999px;
+  transition: width 400ms ease;
+}
+
+.macroBarFillFat {
+  height: 100%;
+  background: #8B5CF6;
+  border-radius: 9999px;
+  transition: width 400ms ease;
+}
+
+
+/* ------------------------------------------------------------- */
+/* MAIN 2-COLUMN GRID (FULL WIDTH)                               */
+/* ------------------------------------------------------------- */
+.mainGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1.35rem;
+  align-items: start;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------------- */
+/* LEFT COLUMN: TODAY'S WORKOUT                                  */
+/* ------------------------------------------------------------- */
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.25rem;
+}
+
+.sectionTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.dumbbellIconWrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #EFF6FF;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sectionTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.statusTagCompleted {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  background: #E6F7F0;
+  color: #0A6C58;
+  border: 1px solid #B8EBD0;
+  text-transform: uppercase;
+}
+
+.statusTagRest {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  background: #F3E8FF;
+  color: #7C3AED;
+  border: 1px solid #DDD6FE;
+  text-transform: uppercase;
+}
+
+.statusTagMissed {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  text-transform: uppercase;
+}
+
+.statusTagUpcoming {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  background: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #BFDBFE;
+  text-transform: uppercase;
+}
+
+.viewDetailsLink {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 150ms ease;
+}
+
+.viewDetailsLink:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+/* Workout Card */
+.workoutCard {
+  background: #FFFFFF;
+  border: 1px solid #EEF2F6;
+  border-radius: 16px;
+  padding: 1.45rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.workoutCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #F1F5F9;
+  gap: 1rem;
+}
+
+.workoutHeroLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  min-width: 0;
+}
+
+.heroCheckCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #0A6C58;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.heroRestCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #8B5CF6;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.workoutHeroInfo {
+  min-width: 0;
+}
+
+.workoutHeroTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workoutHeroMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #64748B;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.viewSummaryBtn {
+  background: #0A6C58;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.55rem 1.2rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 3px rgba(10, 108, 88, 0.25);
+}
+
+.viewSummaryBtn:hover {
+  background: #085848;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(10, 108, 88, 0.3);
+}
+
+/* Exercises List */
+.exerciseList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.exerciseRow {
+  background: #FFFFFF;
+  border: 1px solid #F1F5F9;
+  border-radius: 12px;
+  padding: 0.95rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.exerciseRow:hover {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  transform: translateX(2px);
+}
+
+.exerciseRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.exerciseIndexBadge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #D1FAE5;
+  color: #065F46;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.exerciseDetails {
+  min-width: 0;
+}
+
+.exerciseName {
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exerciseMeta {
+  font-size: 0.8125rem;
+  color: #64748B;
+  margin: 2px 0 0 0;
+  font-weight: 500;
+}
+
+.exerciseRowRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.checkCircleIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0A6C58;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chevronRightIcon {
+  color: #94A3B8;
+  transition: transform 150ms ease;
+}
+
+.exerciseRow:hover .chevronRightIcon {
+  color: #475569;
+  transform: translateX(2px);
+}
+
+/* Rest Day Message Box */
+.restDayBox {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  background: #F8FAFC;
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+
+.restDayIconCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #F3E8FF;
+  color: #7C3AED;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restDayTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.restDayDesc {
+  font-size: 0.85rem;
+  color: #64748B;
+  max-width: 460px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+
+/* ------------------------------------------------------------- */
+/* RIGHT COLUMN: NUTRITION, CHECKLIST, QUICK ACTIONS             */
+/* ------------------------------------------------------------- */
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  min-width: 0;
+}
+
+/* Card General Wrapper */
+.panelCard {
+  background: #FFFFFF;
+  border: 1px solid #EEF2F6;
+  border-radius: 16px;
+  padding: 1.35rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.panelCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.15rem;
+}
+
+.panelTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.panelIconWrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panelIconNutrition {
+  background: #E6F7F0;
+  color: #0A6C58;
+}
+
+.panelIconChecklist {
+  background: #FFF7ED;
+  color: #F97316;
+}
+
+.panelIconQuickActions {
+  background: #FEF9C3;
+  color: #D97706;
+}
+
+.panelTitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.panelHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748B;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.panelHeaderRight:hover {
+  color: #0F172A;
+}
+
+/* Nutrition Split: Donut + Bars */
+.nutritionSplit {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.35rem;
+  align-items: center;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.donutContainer {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donutSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.donutBg {
+  stroke: #E2E8F0;
+}
+
+.donutProgress {
+  stroke: #0D9488;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 500ms ease;
+}
+
+.donutCenterText {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.donutValue {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.donutLabel {
+  font-size: 0.725rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.macroBarsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.macroBarItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.macroBarItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.775rem;
+}
+
+.macroBarItemLabel {
+  font-weight: 600;
+  color: #475569;
+}
+
+.macroBarItemValue {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.macroMiniTrack {
+  width: 100%;
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+/* Meals 4-Grid */
+.mealsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.65rem;
+  margin-top: 1.15rem;
+}
+
+@media (max-width: 480px) {
+  .mealsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mealCard {
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 12px;
+  padding: 0.75rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+  position: relative;
+  transition: all 150ms ease;
+  cursor: pointer;
+}
+
+.mealCard:hover {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+}
+
+.mealIconWrap {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mealName {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.mealCalories {
+  font-size: 0.775rem;
+  font-weight: 750;
+  color: #0F172A;
+}
+
+.mealStatusCircle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.mealStatusLogged {
+  background: #E6F7F0;
+  color: #0A6C58;
+  border: 1px solid #B8EBD0;
+}
+
+.mealStatusAdd {
+  background: #FFFFFF;
+  color: #94A3B8;
+  border: 1px dashed #CBD5E1;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.mealCard:hover .mealStatusAdd {
+  color: #0F172A;
+  border-color: #94A3B8;
+  background: #F8FAFC;
+}
+
+/* Daily Checklist */
+.checklistHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.checklistCount {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  color: #0F172A;
+}
+
+.checklistMiniBar {
+  width: 60px;
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.checklistMiniFill {
+  height: 100%;
+  background: #10B981;
+  border-radius: 9999px;
+  transition: width 300ms ease;
+}
+
+.checklistGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem 1.25rem;
+}
+
+@media (max-width: 540px) {
+  .checklistGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.checklistItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 150ms ease;
+}
+
+.checklistItem:hover {
+  opacity: 0.85;
+}
+
+.customCheckbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.checkboxChecked {
+  background: #0A6C58;
+  border: 1.5px solid #0A6C58;
+  color: #FFFFFF;
+}
+
+.checkboxUnchecked {
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+}
+
+.checklistItem:hover .checkboxUnchecked {
+  border-color: #0A6C58;
+}
+
+.checklistLabel {
+  font-size: 0.8125rem;
+  color: #334155;
+  font-weight: 500;
+  transition: color 150ms ease;
+}
+
+.checklistLabelChecked {
+  color: #475569;
+}
+
+/* Quick Actions */
+.quickActionsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.65rem;
+}
+
+@media (max-width: 480px) {
+  .quickActionsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.actionTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.65rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 0.45rem;
+  text-decoration: none;
+}
+
+.actionTile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.actionTile:active {
+  transform: translateY(0);
+}
+
+.actionFood {
+  background: #EAF7EE;
+  color: #16A34A;
+}
+
+.actionWorkout {
+  background: #EBF3FE;
+  color: #2563EB;
+}
+
+.actionWater {
+  background: #E6F7FC;
+  color: #0284C7;
+}
+
+.actionNote {
+  background: #FEF6E9;
+  color: #D97706;
+}
+
+.actionTileLabel {
+  font-size: 0.775rem;
+  font-weight: 650;
+  color: #0F172A;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- */
+/* MODAL CONTENT STYLES                                          */
+/* ------------------------------------------------------------- */
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.modalStatRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.modalStatBox {
+  background: #F8FAFC;
+  border: 1px solid #EEF2F6;
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.modalStatValue {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 750;
+  color: #0F172A;
+}
+
+.modalStatLabel {
+  font-size: 0.725rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.modalFormGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.modalLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.modalInput, .modalSelect, .modalTextarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #0F172A;
+  background: #FFFFFF;
+  box-sizing: border-box;
+  transition: border-color 150ms ease;
+}
+
+.modalInput:focus, .modalSelect:focus, .modalTextarea:focus {
+  outline: none;
+  border-color: #0A6C58;
+  box-shadow: 0 0 0 3px rgba(10, 108, 88, 0.12);
+}
+
+.modalTextarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.modalActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.btnPrimary {
+  background: #0A6C58;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.btnPrimary:hover {
+  background: #085848;
+}
+
+.btnSecondary {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btnSecondary:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+/* Water Presets */
+.waterPresets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.waterPresetBtn {
+  background: #E6F7FC;
+  color: #0284C7;
+  border: 1px solid #BAE6FD;
+  border-radius: 8px;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 150ms ease;
+}
+
+.waterPresetBtn:hover {
+  background: #BAE6FD;
+  color: #0369A1;
+}

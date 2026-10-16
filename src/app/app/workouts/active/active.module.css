@@ -491,3 +491,224 @@
   padding: 3rem;
   color: var(--text-muted);
 }
+
+/* Completed Workout Session Styles */
+.completedHeroCard {
+  padding: 1.5rem;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  backdrop-filter: blur(12px);
+}
+
+.completedHeroTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.completedHeroLeft {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.completedHeroIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+.completedHeroEyebrowRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.completedHeroEyebrow {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.completedHeroTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-family: Outfit, sans-serif;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.completedHeroDate {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+
+.completedHeroActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.completedHeroStatsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.completedStatTile {
+  padding: 0.875rem 1rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.completedStatVal {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: Outfit, sans-serif;
+  color: var(--text-primary);
+}
+
+.completedStatLbl {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.completedExercisesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.completedExercisesListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.completedSectionTitle {
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-family: Outfit, sans-serif;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.completedSectionCount {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.completedExerciseCard {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.completedExerciseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.completedExerciseHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.completedCheckBadge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.completedExerciseName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: Outfit, sans-serif;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.completedExerciseMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.completedExerciseSetsSummary {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.completedSetRow {
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.completedSetRow:hover {
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.setValueHighlight {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.setTypeText {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.completedCheckIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}

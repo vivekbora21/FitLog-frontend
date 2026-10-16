@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Activity } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useDomainEvent } from '@/lib/events';
 import {
   NutritionDayResponse,
   NutritionHistoryResponse,
@@ -74,6 +75,14 @@ export default function NutritionPage() {
     loadNutrition();
   }, [loadNutrition]);
 
+  // Reactive cross-view synchronization
+  useDomainEvent('nutrition-updated', () => {
+    loadNutrition();
+  });
+  useDomainEvent('plan-updated', () => {
+    loadNutrition();
+  });
+
   // Target values & resolved mode
   const mode = (pacing?.mode || 'RECOMP') as JourneyMode;
   const targetKcal = data?.targets?.daily_calories ?? 2160;
@@ -83,10 +92,10 @@ export default function NutritionPage() {
   const targetWaterMl = data?.targets?.water_ml ?? 3500;
 
   // Logged values
-  const loggedKcal = data?.day?.total_calories ?? 2044;
-  const loggedProtein = data?.day?.total_protein ?? 105;
-  const loggedCarbs = data?.day?.total_carbs ?? 226.5;
-  const loggedFat = data?.day?.total_fat ?? 62.5;
+  const loggedKcal = data?.day?.total_calories ?? 0;
+  const loggedProtein = data?.day?.total_protein ?? 0;
+  const loggedCarbs = data?.day?.total_carbs ?? 0;
+  const loggedFat = data?.day?.total_fat ?? 0;
   const loggedWaterMl = data?.day?.water_consumed_ml ?? 0;
 
   // Macro Summary Data payload - calculated in backend
@@ -149,16 +158,7 @@ export default function NutritionPage() {
     if (rawHistory.length > 0) {
       return [...rawHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
-    // Realistic fallback baseline
-    return [
-      { date: '2026-10-08', program_day_number: 1, total_calories: 1960, total_protein: 100, total_carbs: 215, total_fat: 58, water_consumed_ml: 0, meal_count: 1, meals: [], has_logged: true, target_calories: 2160, target_protein: 165, target_carbs: 264, target_fat: 43, target_water: 3500, target_type: 'TARGET', mode: 'RECOMP' },
-      { date: '2026-10-09', program_day_number: 2, total_calories: 1850, total_protein: 92, total_carbs: 200, total_fat: 56, water_consumed_ml: 0, meal_count: 1, meals: [], has_logged: true, target_calories: 2160, target_protein: 165, target_carbs: 264, target_fat: 43, target_water: 3500, target_type: 'TARGET', mode: 'RECOMP' },
-      { date: '2026-10-10', program_day_number: 3, total_calories: 2120, total_protein: 110, total_carbs: 240, total_fat: 65, water_consumed_ml: 0, meal_count: 1, meals: [], has_logged: true, target_calories: 2160, target_protein: 165, target_carbs: 264, target_fat: 43, target_water: 3500, target_type: 'TARGET', mode: 'RECOMP' },
-      { date: '2026-10-11', program_day_number: 4, total_calories: 1980, total_protein: 95, total_carbs: 220, total_fat: 60, water_consumed_ml: 0, meal_count: 1, meals: [], has_logged: true, target_calories: 2160, target_protein: 165, target_carbs: 264, target_fat: 43, target_water: 3500, target_type: 'TARGET', mode: 'RECOMP' },
-      { date: '2026-10-12', program_day_number: 5, total_calories: 2250, total_protein: 120, total_carbs: 250, total_fat: 70, water_consumed_ml: 0, meal_count: 1, meals: [], has_logged: true, target_calories: 2160, target_protein: 165, target_carbs: 264, target_fat: 43, target_water: 3500, target_type: 'TARGET', mode: 'RECOMP' },
-      { date: '2026-10-13', program_day_number: 6, total_calories: 1910, total_protein: 98, total_carbs: 210, total_fat: 58, water_consumed_ml: 0, meal_count: 1, meals: [], has_logged: true, target_calories: 2160, target_protein: 165, target_carbs: 264, target_fat: 43, target_water: 3500, target_type: 'TARGET', mode: 'RECOMP' },
-      { date: '2026-10-14', program_day_number: 7, total_calories: 2044, total_protein: 105, total_carbs: 226.5, total_fat: 62.5, water_consumed_ml: 0, meal_count: 2, meals: [], has_logged: true, target_calories: 2160, target_protein: 165, target_carbs: 264, target_fat: 43, target_water: 3500, target_type: 'TARGET', mode: 'RECOMP' },
-    ];
+    return [];
   }, [rawHistory]);
 
   return (

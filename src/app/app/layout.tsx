@@ -61,7 +61,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (journeyChecked && hasProgram === false) {
-      const allowedWithoutProgram = ['/app', '/app/settings', '/app/guidelines', '/app/gym', '/app/trainer'];
+      const allowedWithoutProgram = ['/app', '/app/today', '/app/settings', '/app/guidelines', '/app/gym', '/app/trainer'];
       const isAllowed = allowedWithoutProgram.some(
         (p) => pathname === p || pathname.startsWith(p + '/')
       );
@@ -113,10 +113,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       />
 
       <div className={`app-main-content-wrap ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <Navbar
-          onToggleSidebar={handleToggleSidebar}
-          isSidebarCollapsed={isSidebarCollapsed}
-        />
+        <React.Suspense fallback={<div style={{ height: 64 }} />}>
+          <Navbar
+            onToggleSidebar={handleToggleSidebar}
+            isSidebarCollapsed={isSidebarCollapsed}
+          />
+        </React.Suspense>
         <main className="app-main-content">
           {children}
         </main>

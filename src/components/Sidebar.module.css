@@ -160,8 +160,30 @@
   padding: 0.65rem 0.4rem;
 }
 
-.logWorkoutBtn {
+.bottomBarRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   width: 100%;
+}
+
+.bottomUserAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #0A6C58;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 750;
+  font-size: 0.8125rem;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(10, 108, 88, 0.25);
+}
+
+.logWorkoutBtn {
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
